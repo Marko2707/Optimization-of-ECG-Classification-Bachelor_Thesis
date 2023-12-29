@@ -1,1 +1,0 @@
-This folders purpose is for faster loading of the Numpy Arrays from the PTB-XL dataset
