@@ -244,11 +244,11 @@ def main():
 
     # Plot des EKG-Signals
     plt.figure(figsize=(12, 6))
-    plt.plot( first_ekg_signal, label='ECG Signal')
+    plt.plot( first_ekg_signal, label="ECG Signal")
     plt.plot(r_peaks, first_ekg_signal[r_peaks], "x", color="red")
-    plt.title('ECG Signal with Detected R-peaks')
-    plt.xlabel('Time (s)')
-    plt.ylabel('Amplitude')
+    plt.title("ECG Signal with Detected R-peaks")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Amplitude")
     plt.legend()
     plt.show()
 
@@ -269,12 +269,12 @@ def main():
     print("Detected R-peaks indices:", r_peaks_indices)
     # Plot des EKG-Signals mit modifizierten Werten
     plt.figure(figsize=(12, 6))
-    plt.plot(first_ekg_signal, label='Original ECG Signal')
-    plt.plot(modified_signal, label='Modified Signal', linestyle='--', color='red')
-    plt.plot(r_peaks, first_ekg_signal[r_peaks], "x", color="red", label='Detected R-peaks')
-    plt.title('ECG Signal with Modified Values around R-peaks')
-    plt.xlabel('Time (s)')
-    plt.ylabel('Amplitude')
+    plt.plot(first_ekg_signal, label="Original ECG Signal")
+    plt.plot(modified_signal, label="Modified Signal", linestyle="--", color="red")
+    plt.plot(r_peaks, first_ekg_signal[r_peaks], "x", color="red", label="Detected R-peaks")
+    plt.title("ECG Signal with Modified Values around R-peaks")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Amplitude")
     plt.legend()
     plt.show()
     """
@@ -290,14 +290,17 @@ def main():
 
     # Modified data
     modified_data = x_train_panTom[0, :, 0]
+
+    #x_train_panTom_withoutZeros = preprocess_remove_zeros(x_train_panTom, target_length=600)
+    #more_modified_data = x_train_panTom_withoutZeros[0,:,0]
     
     # Plots the difference in the data and PanTompkins preprocessed Data
     plt.figure(figsize=(12, 6))
-    plt.plot(original_data, label='Original Data', color='blue')
-    plt.plot(modified_data, label='Modified Data', color='red', linestyle='dashed')
-    plt.title('Comparison Original Data and Modified PanTompkins++ Data')
-    plt.xlabel('Measurements 100Hz over 10 Seconds')
-    plt.ylabel('Amplitude (mV)')
+    plt.plot(original_data, label="Original Data", color="blue")
+    plt.plot(modified_data, label="Modified Data", color="red", linestyle="dashed")
+    plt.title("Comparison Original Data and Modified PanTompkins++ Data")
+    plt.xlabel("Measurements 100Hz over 10 Seconds")
+    plt.ylabel("Amplitude (mV)")
     plt.legend()
     plt.show()
     
@@ -420,6 +423,29 @@ def preprocess_pantompkinsPlusPlus(ecg_data, window_size):
             modified_ecg_data[i, start_index:end_index, 0] = ecg_data[i, start_index:end_index, 0]
 
     return modified_ecg_data
+
+
+def preprocess_remove_zeros(ecg_data, target_length):
+    modified_ecg_data = np.zeros((ecg_data.shape[0], target_length, ecg_data.shape[2]))
+
+    print("Removing Zeros and Adjusting Length")
+    for i in range(ecg_data.shape[0]):
+        first_lead = ecg_data[i, :, 0]
+        
+        # Find non-zero indices
+        non_zero_indices = np.where(first_lead != 0)[0]
+        
+        # Calculate how many zeros to remove
+        num_zeros_to_remove = max(0, len(non_zero_indices) - target_length)
+        
+        # Randomly select zeros to remove
+        zeros_to_remove_indices = np.random.choice(non_zero_indices, size=num_zeros_to_remove, replace=False)
+        
+        # Set the remaining data
+        modified_ecg_data[i, :, 0] = first_lead[zeros_to_remove_indices[:target_length]]
+
+    return modified_ecg_data
+
 """
 author = Marko Stankovic
 Following code was written with the help of https://github.com/helme/ecg_ptbxl_benchmarking and ChatGPT
@@ -532,10 +558,10 @@ def train_resnet1d_wang2(x_train, y_train_multilabel, x_test, y_test_multilabel,
     accuracy = accuracy_score(y_test_true[:, 0], y_test_pred_rounded)
     print(f"Accuracy: {accuracy:.4f}")
 
-    precision = precision_score(y_test_true[:, 0], y_test_pred_rounded, average='weighted')
+    precision = precision_score(y_test_true[:, 0], y_test_pred_rounded, average="weighted")
     print(f"Precision: {precision:.4f}")
 
-    recall = recall_score(y_test_true[:, 0], y_test_pred_rounded, average='weighted')
+    recall = recall_score(y_test_true[:, 0], y_test_pred_rounded, average="weighted")
     print(f"Recall: {recall:.4f}")
     """
 
@@ -571,7 +597,7 @@ def train_resnet1d_wang2(x_train, y_train_multilabel, x_test, y_test_multilabel,
     print(y_test_entry[:10])
     print(y_pred_entry[:10])
     # Berechne F1-Score
-    #f1 = f1_score(y_test_true[:, 0, :], y_test_pred_rounded[:, 0], average='weighted')
+    #f1 = f1_score(y_test_true[:, 0, :], y_test_pred_rounded[:, 0], average="weighted")
     #print(f"F1-Score: {f1:.4f}")
     print(y_test_entry[0:200:5])
     print(y_pred_entry[0:200:5])
@@ -633,7 +659,7 @@ def dataCreation(pathname):
         return list(set(tmp))
 
     # Apply diagnostic superclass
-    Y['diagnostic_superclass'] = Y.scp_codes.apply(aggregate_diagnostic)
+    Y["diagnostic_superclass"] = Y.scp_codes.apply(aggregate_diagnostic)
 
     # Split data into train and test
     test_fold = 10
