@@ -21,7 +21,7 @@ from sklearn.preprocessing import MultiLabelBinarizer
 
 
 #imports of modules in this project
-from helper_functions import is_folder_empty
+from helper_functions import is_folder_empty, create_folder_if_not_exists
 from classification_models.resnet1d import resnet1d_wang, resnet1d18 
 
 
@@ -66,6 +66,10 @@ def main():
     x_test_unprocessed = numpy_path + "x_test_unprocessed.npy"
     y_train_path = series_path + "y_train.pkl"
     y_test_path = series_path + "y_test.pkl"
+    
+    #creates the folders to save the arrays
+    create_folder_if_not_exists(numpy_path)
+    create_folder_if_not_exists(series_path)
 
     #If the data is not pre saved, it initilizes it for the first time
     #Else uses the already preloaded data, making the runtime way faster
@@ -391,6 +395,7 @@ def main():
 """ Function which only lets the QRS Complexes in the data be"""
 def preprocess_pantompkinsPlusPlus(ecg_data, window_size):
     # creates the same data filled with only zeros
+    modified_ecg_data = np.zeros_like(ecg_data)
     print("Processing the Data with the PanTompkins++ Algorithm")
     for i in range(ecg_data.shape[0]):
         #T aking the first lead for each sample
