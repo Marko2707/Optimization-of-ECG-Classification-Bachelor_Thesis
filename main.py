@@ -291,21 +291,23 @@ def main():
     # Modified data
     modified_data = x_train_panTom[0, :, 0]
 
-    #x_train_panTom_withoutZeros = preprocess_remove_zeros(x_train_panTom, target_length=600)
-    #more_modified_data = x_train_panTom_withoutZeros[0,:,0]
+    x_train_panTom_compressed = preprocess_pantompkinsPlusPlusCompression(x_train, window_size= window_size)
+    x_test_panTom_compressed = preprocess_pantompkinsPlusPlusCompression(x_test, window_size= window_size)
+
+
+    more_modified_data = x_train_panTom_compressed[0, :, 0]
     
     # Plots the difference in the data and PanTompkins preprocessed Data
     plt.figure(figsize=(12, 6))
     plt.plot(original_data, label="Original Data", color="blue")
     plt.plot(modified_data, label="Modified Data", color="red", linestyle="dashed")
+    plt.plot(more_modified_data, label="MoreModified Data", color="yellow", linestyle="dashed")
     plt.title("Comparison Original Data and Modified PanTompkins++ Data")
     plt.xlabel("Measurements 100Hz over 10 Seconds")
     plt.ylabel("Amplitude (mV)")
     plt.legend()
     plt.show()
     
-
-
     print(f"Shape of x_train {x_train.shape}, Shape of x_test {x_test.shape}, Shape of y_train {y_train.shape} and Shape of y_test {y_test.shape}")
     print(f"First 9 Labels of PandaSeries y_train:{y_train[:8]}")
     print(f"First lead of the first ecg data the first 10{x_train[0][:10][0]}")
@@ -343,12 +345,37 @@ def main():
     y_train_onehot = np.expand_dims(y_train_multilabel, axis=1)
     y_test_onehot = np.expand_dims(y_test_multilabel, axis=1)
 
+    #-----Modelllauf auf Pan Tompkins daten mit Komprimierung um 500 weniger Daten--------------------------------
+    x_train_panTom_compressed = np.transpose(x_train_panTom_compressed, (0, 2, 1))
+    x_test_panTom_compressed = np.transpose(x_test_panTom_compressed, (0, 2, 1))
+
+    #starting the countdown, to see how long the raw data model takes
+    start = tm.time()
+    print(x_train_panTom_compressed.shape)
+    print(x_test_panTom_compressed.shape)
+
+    # Assuming x_train_panTom and x_test_panTom have shapes (19601, 12, 1000) and (2198, 12, 1000), respectively
+    x_train_reshaped = x_train_panTom_compressed[:, 0, :].reshape(-1, 1, 500)
+    x_test_reshaped = x_test_panTom_compressed[:, 0, :].reshape(-1, 1, 500)
+
+    print(f"Shapes x: {x_train_reshaped.shape} and {x_test_reshaped.shape}")
+    print(f"Shapes y: {y_train_multilabel.shape} and {y_test_multilabel.shape} ")
+
+    #initializing the model resnet1d_wang, explicitly the function train_resnet1d_wang (Returns the Metric results for each Class Entry)
+    #We use all classes and all samples but only one of the 12 leads for performance reasons
+    model = train_resnet1d_wang2(x_train_reshaped, y_train_multilabel,  x_test_reshaped, y_test_multilabel, epochs=2, batch_size=32, num_splits=10)
+    end = tm.time()
+    time = end - start
+    #Prints the time it took to train and evalutate the model:
+    print(f"Training and Evaluation time on PanTompkins with compression processed Data: {time}")
+
 
     #-----Modelllauf auf Pan Tompkins daten----------------------------------------------------------------------
     x_train_panTom = np.transpose(x_train_panTom, (0, 2, 1))
     x_test_panTom = np.transpose(x_test_panTom, (0, 2, 1))
 
-    #starting the countdown, to see how long the raw data model takes
+    #starting the countdown, to see how long the raw data model takes#
+    print("Testing the model on Pan Tompkins data with full measurements")
     start = tm.time()
     print(x_train_panTom.shape)
     print(x_test_panTom.shape)
@@ -424,6 +451,42 @@ def preprocess_pantompkinsPlusPlus(ecg_data, window_size):
 
     return modified_ecg_data
 
+"""Similiar to the preprocess_pantompkinsPlusPlus, just that it also removes the last 500 measurements and comprimises the qrs complexes nearer to eachother """
+def preprocess_pantompkinsPlusPlusCompression(ecg_data, window_size):
+    # creates the same data filled with only zeros
+    modified_ecg_data = np.zeros_like(ecg_data)
+    print("Processing the Data with the PanTompkins++ Algorithm with Compression")
+    for i in range(ecg_data.shape[0]):
+        #T aking the first lead for each sample
+        first_lead = ecg_data[i, :, 0]
+        if i % 500 == 0:
+            print(i)
+        # applying the peak detection algorithm on each sampole
+        freq = 100
+        pan_tompkins = Pan_Tompkins_Plus_Plus()
+        r_peaks_indices = pan_tompkins.rpeak_detection(first_lead, freq)
+        r_peaks_indices = r_peaks_indices.astype(int)
+
+        starting_point = 0
+        for peak_index in r_peaks_indices:
+            #setting the first window infront of the rpeak, or start of the data
+            start_index = max(0, peak_index - window_size)
+
+            #setting the window after the rpeak or end of the data
+            #len(first_lead) is 1000
+            end_index = min(len(first_lead), peak_index + window_size + 1)
+            end_point = end_index - start_index + starting_point
+
+            # Keep the R-peaks and 100 seconds before and after unchanged
+            modified_ecg_data[i, starting_point:end_point, 0] = ecg_data[i, start_index:end_index, 0]
+            starting_point = end_point + 5
+
+
+    #Remove the last 500 measurements along the second axis
+    modified_ecg_data = modified_ecg_data[:, :-500, :]
+
+    print(modified_ecg_data.shape)
+    return modified_ecg_data
 
 def preprocess_remove_zeros(ecg_data, target_length):
     modified_ecg_data = np.zeros((ecg_data.shape[0], target_length, ecg_data.shape[2]))
