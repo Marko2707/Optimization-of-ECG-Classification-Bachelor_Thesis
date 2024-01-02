@@ -282,17 +282,22 @@ def main():
     freq = 100
     #the recording is 10 seconds --> 10 000 ms and a average qrs complex is 100ms
     window_size = int(0.1 * freq)  # 100 ms window size
-    x_train_panTom = preprocess_pantompkinsPlusPlus(x_train, window_size= window_size)
-    x_test_panTom = preprocess_pantompkinsPlusPlus(x_test, window_size= window_size)
+
+    #--Pan Tompkins Algorithm without 
+    #x_train_panTom = preprocess_pantompkinsPlusPlus(x_train, window_size= window_size)
+    #x_test_panTom = preprocess_pantompkinsPlusPlus(x_test, window_size= window_size)
 
     # Original data
     original_data = x_train[0, :, 0]
 
     # Modified data
-    modified_data = x_train_panTom[0, :, 0]
+    #modified_data = x_train_panTom[0, :, 0]
 
-    x_train_panTom_compressed = preprocess_pantompkinsPlusPlusCompression(x_train, window_size= window_size)
-    x_test_panTom_compressed = preprocess_pantompkinsPlusPlusCompression(x_test, window_size= window_size)
+    #Length of Compressed Data to be removed
+    length_data_compressed = 600
+
+    x_train_panTom_compressed = preprocess_pantompkinsPlusPlusCompression(x_train, window_size= window_size, data_length=length_data_compressed)
+    x_test_panTom_compressed = preprocess_pantompkinsPlusPlusCompression(x_test, window_size= window_size, data_length=length_data_compressed)
 
 
     more_modified_data = x_train_panTom_compressed[0, :, 0]
@@ -300,8 +305,8 @@ def main():
     # Plots the difference in the data and PanTompkins preprocessed Data
     plt.figure(figsize=(12, 6))
     plt.plot(original_data, label="Original Data", color="blue")
-    plt.plot(modified_data, label="Modified Data", color="red", linestyle="dashed")
-    plt.plot(more_modified_data, label="MoreModified Data", color="yellow", linestyle="dashed")
+    #plt.plot(modified_data, label="Modified Data", color="red", linestyle="dashed")
+    plt.plot(more_modified_data, label="Compressed Data", color="yellow", linestyle="dashed")
     plt.title("Comparison Original Data and Modified PanTompkins++ Data")
     plt.xlabel("Measurements 100Hz over 10 Seconds")
     plt.ylabel("Amplitude (mV)")
@@ -312,27 +317,8 @@ def main():
     print(f"First 9 Labels of PandaSeries y_train:{y_train[:8]}")
     print(f"First lead of the first ecg data the first 10{x_train[0][:10][0]}")
 
-    # Used to Change Data to fit model but not anymore TODO Remove or TODO Utilize
-    """
-    #print(f"y_train Before Update: Test für Multilabel: {y_train[35:45]}" )
-    #Changing the Labels to Integers for the Machine Learning Models
-    classes = ["NORM", "MI", "STTC", "CD", "HYP"] 
-    translation = [1, 2, 3, 4, 5]
-    y_train = label_changer_stringToInt(classes, translation, y_train)
-    y_test = label_changer_stringToInt(classes, translation, y_test)
-    #print(f"y_train Updated Test für Multilabel: {y_train[35:45]}" )
 
-    #resnet1d_model = resnet1d_wang(kernel_size=[7, 5], kernel_size_stem=8, stride_stem=2, pooling_stem=True, inplanes=256)
-    #print(resnet1d_model)
-    # Annahme: Sie verwenden resnet1d_wang, Sie können auch ein anderes Modell wählen
-    model = resnet1d_wang(num_classes=5)
-
-    #print(model)
-    # Daten in DataLoader umwandeln
-    print(x_train.shape)
-    print(y_train.shape)
-    """
-
+    # Machine Learning Phase -------------------------------------------------------------------------------------------------------------------------------------------
     # Wandeln Sie die Listen von Labels in binäre Vektoren um
     #initilizing a MultiLabelBinarizer to make the labels binary
     mlb = MultiLabelBinarizer()
@@ -345,32 +331,31 @@ def main():
     y_train_onehot = np.expand_dims(y_train_multilabel, axis=1)
     y_test_onehot = np.expand_dims(y_test_multilabel, axis=1)
 
-    #-----Modelllauf auf Pan Tompkins daten mit Komprimierung um 500 weniger Daten--------------------------------
+    #-----Modelllauf auf Pan Tompkins daten mit Komprimierung um 600 weniger Daten--------------------------------
     x_train_panTom_compressed = np.transpose(x_train_panTom_compressed, (0, 2, 1))
     x_test_panTom_compressed = np.transpose(x_test_panTom_compressed, (0, 2, 1))
 
-    #starting the countdown, to see how long the raw data model takes
-    start = tm.time()
-    print(x_train_panTom_compressed.shape)
-    print(x_test_panTom_compressed.shape)
 
-    # Assuming x_train_panTom and x_test_panTom have shapes (19601, 12, 1000) and (2198, 12, 1000), respectively
-    x_train_reshaped = x_train_panTom_compressed[:, 0, :].reshape(-1, 1, 500)
-    x_test_reshaped = x_test_panTom_compressed[:, 0, :].reshape(-1, 1, 500)
+
+    # Assuming x_train_panTom and x_test_panTom have shapes (19601, 12, x) and (2198, 12, x), respectively
+    x_train_reshaped = x_train_panTom_compressed[:, 0, :].reshape(-1, 1, (1000 - length_data_compressed))   
+    x_test_reshaped = x_test_panTom_compressed[:, 0, :].reshape(-1, 1, (1000 - length_data_compressed))
 
     print(f"Shapes x: {x_train_reshaped.shape} and {x_test_reshaped.shape}")
     print(f"Shapes y: {y_train_multilabel.shape} and {y_test_multilabel.shape} ")
 
+    #starting the countdown, to see how long the raw data model takes
+    start = tm.time()
     #initializing the model resnet1d_wang, explicitly the function train_resnet1d_wang (Returns the Metric results for each Class Entry)
     #We use all classes and all samples but only one of the 12 leads for performance reasons
-    model = train_resnet1d_wang2(x_train_reshaped, y_train_multilabel,  x_test_reshaped, y_test_multilabel, epochs=2, batch_size=32, num_splits=10)
+    model = train_resnet1d_wang2(x_train_reshaped, y_train_multilabel,  x_test_reshaped, y_test_multilabel, epochs=2, batch_size=32, num_splits=10, type_of_data="PanTompkins++ Compressed Data")
     end = tm.time()
     time = end - start
     #Prints the time it took to train and evalutate the model:
     print(f"Training and Evaluation time on PanTompkins with compression processed Data: {time}")
 
-
     #-----Modelllauf auf Pan Tompkins daten----------------------------------------------------------------------
+    """
     x_train_panTom = np.transpose(x_train_panTom, (0, 2, 1))
     x_test_panTom = np.transpose(x_test_panTom, (0, 2, 1))
 
@@ -388,16 +373,14 @@ def main():
     print(f"Shapes y: {y_train_multilabel.shape} and {y_test_multilabel.shape} ")
     #initializing the model resnet1d_wang, explicitly the function train_resnet1d_wang (Returns the Metric results for each Class Entry)
     #We use all classes and all samples but only one of the 12 leads for performance reasons
-    model = train_resnet1d_wang2(x_train_reshaped, y_train_multilabel,  x_test_reshaped, y_test_multilabel, epochs=2, batch_size=32, num_splits=10)
+    model = train_resnet1d_wang2(x_train_reshaped, y_train_multilabel,  x_test_reshaped, y_test_multilabel, epochs=2, batch_size=32, num_splits=10, type_of_data="Uncompressed PanTompkins Data")
     end = tm.time()
     time = end - start
     #Prints the time it took to train and evalutate the model:
     print(f"Training and Evaluation time on PanTompkins processed Data: {time}")
-
+    """
     
     #--------------Modellauf auf rohdaten----------------------------------------------------------------------
-
-
 
     #Sorting the Data, so that it fits the expected way of the models
     x_train = np.transpose(x_train, (0, 2, 1))
@@ -407,14 +390,14 @@ def main():
     x_train_reshaped = x_train[:, 0, :].reshape(-1, 1, 1000)
     x_test_reshaped = x_test[:, 0, :].reshape(-1, 1, 1000)
 
-    print(f"Shapes: {x_train.shape} und {x_test.shape}")
+    print(f"Shapes x: {x_train.shape} und {x_test.shape}")
     print(f"Shapes y: {y_train_multilabel.shape} and {y_test_multilabel.shape} ")
 
     #starting the countdown, to see how long the raw data model takes
     start = tm.time()
     #initializing the model resnet1d_wang, explicitly the function train_resnet1d_wang (Returns the Metric results for each Class Entry)
     #We use all classes and all samples but only one of the 12 leads for performance reasons
-    model = train_resnet1d_wang2(x_train_reshaped, y_train_multilabel,  x_test_reshaped, y_test_multilabel, epochs=10, batch_size=32, num_splits=10)
+    model = train_resnet1d_wang2(x_train_reshaped, y_train_multilabel,  x_test_reshaped, y_test_multilabel, epochs=2, batch_size=32, num_splits=10, type_of_data="Raw Data")
     end = tm.time()
     time = end - start
     #Prints the time it took to train and evalutate the model:
@@ -452,7 +435,7 @@ def preprocess_pantompkinsPlusPlus(ecg_data, window_size):
     return modified_ecg_data
 
 """Similiar to the preprocess_pantompkinsPlusPlus, just that it also removes the last 500 measurements and comprimises the qrs complexes nearer to eachother """
-def preprocess_pantompkinsPlusPlusCompression(ecg_data, window_size):
+def preprocess_pantompkinsPlusPlusCompression(ecg_data, window_size, data_length= 500):
     # creates the same data filled with only zeros
     modified_ecg_data = np.zeros_like(ecg_data)
     print("Processing the Data with the PanTompkins++ Algorithm with Compression")
@@ -483,7 +466,7 @@ def preprocess_pantompkinsPlusPlusCompression(ecg_data, window_size):
 
 
     #Remove the last 500 measurements along the second axis
-    modified_ecg_data = modified_ecg_data[:, :-500, :]
+    modified_ecg_data = modified_ecg_data[:, :-data_length, :]
 
     print(modified_ecg_data.shape)
     return modified_ecg_data
@@ -509,11 +492,12 @@ def preprocess_remove_zeros(ecg_data, target_length):
 
     return modified_ecg_data
 
+
 """
 author = Marko Stankovic
 Following code was written with the help of https://github.com/helme/ecg_ptbxl_benchmarking and ChatGPT
 """
-def train_resnet1d_wang2(x_train, y_train_multilabel, x_test, y_test_multilabel, epochs=10, batch_size=32, num_splits=10, classes = 5):
+def train_resnet1d_wang2(x_train, y_train_multilabel, x_test, y_test_multilabel, epochs=10, batch_size=32, num_splits=10, classes = 5, type_of_data="data"):
     """
     Trains the 1D ResNet model resnet1d_wang from the https://github.com/helme/ecg_ptbxl_benchmarking on ECG data.
 
@@ -639,6 +623,8 @@ def train_resnet1d_wang2(x_train, y_train_multilabel, x_test, y_test_multilabel,
     #Converting to a  list, each value being in the right orderin the prediction as in the actual values
     y_pred_entry = y_pred_entry.tolist()
 
+    print(f"--------Results for {type_of_data}---------------------------")
+
     print("Metrics tested for each Instance of all classes:")
 
     accuracy_eachEntry = accuracy_score(y_test_entry, y_pred_entry)
@@ -655,6 +641,7 @@ def train_resnet1d_wang2(x_train, y_train_multilabel, x_test, y_test_multilabel,
     fmax_score_eachEntry = f1_score(y_test_entry, y_pred_entry, average="weighted")
 
     print(f"F-Max Score Each Entry: {fmax_score_eachEntry}")
+    print("-------------------------------------------------------------")
 
     """
     print(y_test_entry[:10])
