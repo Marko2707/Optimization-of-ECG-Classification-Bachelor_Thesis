@@ -25,8 +25,11 @@ from helper_functions import is_folder_empty, create_folder_if_not_exists, plot_
 from classification_models.resnet1d import resnet1d_wang, resnet1d18 
 
 
-
+#Import of PeakDetection Algorithms
+#PanTompkins++
 from peak_detection_algos.pan_tompkins_plus_plus import Pan_Tompkins_Plus_Plus
+#Wavelet Methods
+from peak_detection_algos.wavelet_based_method import cwt_r_peak_detection, dwt_r_peak_detection
 
 #imports for ResNet
 import torch
@@ -147,12 +150,14 @@ def main():
 
     if(plot_choice in ["yes", "y", "ye", "j", "ja", "ok", "s", "si"]):
         plot_all_classes(extracted_classes= extracted_classes, extracted_ecg_ids= extracted_ecg_ids, target_classes=target_classes, x_train=x_train, y_train=y_train, number_no_superclass=number_no_superclass)
-
+        plot_panTompkinsPlusPlus(x_train=x_train)
         
         
     #-----End of Plotting--------------------------
-    plot_panTompkinsPlusPlus(x_train=x_train)
+    
    
+   
+
     freq = 100
     #the recording is 10 seconds --> 10 000 ms and a average qrs complex is 100ms
     window_size = int(0.1 * freq)  # 100 ms window size
@@ -164,11 +169,22 @@ def main():
     # Original data
     original_data = x_train[0, :, 0]
 
+    #test of Wavelet Methods
+
+    dwt_rpeaks = dwt_r_peak_detection(original_data)
+    print(dwt_rpeaks)
+
+    plt.plot(original_data, label='ECG Signal')
+    plt.plot(dwt_rpeaks, original_data[dwt_rpeaks], 'rx', label='DWT R-Peaks')
+    plt.legend()
+    plt.show()
+
+
     # Modified data
     #modified_data = x_train_panTom[0, :, 0]
 
     #Length of Compressed Data to be removed
-    length_data_compressed = 600
+    length_data_compressed = 700
 
     x_train_panTom_compressed = preprocess_pantompkinsPlusPlusCompression(x_train, window_size= window_size, data_length=length_data_compressed)
     x_test_panTom_compressed = preprocess_pantompkinsPlusPlusCompression(x_test, window_size= window_size, data_length=length_data_compressed)
@@ -180,8 +196,8 @@ def main():
     plt.figure(figsize=(12, 6))
     plt.plot(original_data, label="Original Data", color="blue")
     #plt.plot(modified_data, label="Modified Data", color="red", linestyle="dashed")
-    plt.plot(more_modified_data, label="Compressed Data", color="yellow", linestyle="dashed")
-    plt.title("Comparison Original Data and Modified PanTompkins++ Data")
+    plt.plot(more_modified_data, label="Compressed Data", color="red", linestyle="dashed")
+    plt.title("Comparison Original Data and Modified Compressed PanTompkins++ Data")
     plt.xlabel("Measurements 100Hz over 10 Seconds")
     plt.ylabel("Amplitude (mV)")
     plt.legend()
@@ -308,7 +324,7 @@ def preprocess_pantompkinsPlusPlus(ecg_data, window_size):
 
     return modified_ecg_data
 
-"""Similiar to the preprocess_pantompkinsPlusPlus, just that it also removes the last 500 measurements and comprimises the qrs complexes nearer to eachother """
+"""Similiar to the preprocess_pantompkinsPlusPlus, just that it also removes the last 500 (Can be changed and is changed in the main) measurements and comprimises the qrs complexes nearer to eachother """
 def preprocess_pantompkinsPlusPlusCompression(ecg_data, window_size, data_length= 500):
     # creates the same data filled with only zeros
     modified_ecg_data = np.zeros_like(ecg_data)
@@ -469,8 +485,8 @@ def train_resnet1d_wang2(x_train, y_train_multilabel, x_test, y_test_multilabel,
     print(f"Shapes of data {y_test_pred.shape} and {y_test_true.shape}")
 
     #threshold value on which the prediction percentage is supposed to be done into True Value
-    threshold = 0.75 
-
+    threshold = 0.4
+    print(f"Threshold is set at --{threshold}--")
     # Rounding the values of the prediction into 1 and 0 based on the threshold above
     y_test_pred_rounded = np.where(y_test_pred >= threshold, 1, 0)
    
@@ -516,6 +532,9 @@ def train_resnet1d_wang2(x_train, y_train_multilabel, x_test, y_test_multilabel,
 
     print(f"F-Max Score Each Entry: {fmax_score_eachEntry}")
     print("-------------------------------------------------------------")
+
+    accuracy = sum([1 for true_label, pred_label in zip(y_test_entry, y_pred_entry) if true_label == pred_label]) / len(y_test_entry)
+    print(f'Accuracy Selfwritten: {accuracy}')
 
     """
     print(y_test_entry[:10])

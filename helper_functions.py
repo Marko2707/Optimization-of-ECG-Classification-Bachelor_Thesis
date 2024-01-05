@@ -102,14 +102,15 @@ def plot_all_classes(extracted_classes, extracted_ecg_ids, target_classes, x_tra
                 plt.show()
 
 def plot_panTompkinsPlusPlus(x_train):
-    #Erster Umgang mit PanTompkinsPlusPlus
-    
+    # Erster Umgang mit PanTompkinsPlusPlus
+
     # Extrahieren Sie das erste EKG-Signal (1. Leitung) "NORM"
     first_ekg_signal = x_train[0, :, 0]
-    # CD Klasse
-    #first_ekg_signal = x_train[31,:,0]
 
-    #Setting the frequency to 100Hz for the PanTompkinsPlusPlus
+    # CD Klasse
+    # first_ekg_signal = x_train[31,:,0]
+
+    # Setting the frequency to 100Hz for the PanTompkinsPlusPlus
     freq = 100
 
     # Initialisieren Sie eine Instanz des Pan_Tompkins_Plus_Plus-Algorithmus
@@ -119,27 +120,24 @@ def plot_panTompkinsPlusPlus(x_train):
     r_peaks_indices = pan_tompkins.rpeak_detection(first_ekg_signal, freq)
 
     # Zeitachse für das Plot
-    time_axis = np.arange(0, 10, 1/ freq )
+    time_axis = np.arange(0, 10, 10 / len(first_ekg_signal))
 
     r_peaks = r_peaks_indices.astype(int)
-
 
     # Ausgabe der detektierten R-Peaks-Indizes
     print("Detected R-peaks indices:", r_peaks_indices)
 
-    
-
     # Plot des EKG-Signals
     plt.figure(figsize=(12, 6))
-    plt.plot( first_ekg_signal, label="ECG Signal")
-    plt.plot(r_peaks, first_ekg_signal[r_peaks], "x", color="red")
-    plt.title("ECG Signal with Detected R-peaks")
+    plt.plot(time_axis, first_ekg_signal, label="NORM Class R-Peak Detection through Pan-Tompkins++")
+    plt.plot(r_peaks / freq, first_ekg_signal[r_peaks], "x", color="red")
+    plt.title("NORM Class R-Peak Detection through Pan-Tompkins++")
     plt.xlabel("Time (s)")
-    plt.ylabel("Amplitude")
+    plt.ylabel("Amplitude (mV)")
     plt.legend()
     plt.show()
 
-   # Convert R-peaks indices to integers
+    # Convert R-peaks indices to integers
     r_peaks_indices = r_peaks_indices.astype(int)
 
     # Create a mask to set values to 0 except within a 100ms window around each R-peak
@@ -154,13 +152,14 @@ def plot_panTompkinsPlusPlus(x_train):
 
     # Ausgabe der detektierten R-Peaks-Indizes
     print("Detected R-peaks indices:", r_peaks_indices)
+
     # Plot des EKG-Signals mit modifizierten Werten
     plt.figure(figsize=(12, 6))
-    plt.plot(first_ekg_signal, label="Original ECG Signal")
-    plt.plot(modified_signal, label="Modified Signal", linestyle="--", color="red")
-    plt.plot(r_peaks, first_ekg_signal[r_peaks], "x", color="red", label="Detected R-peaks")
-    plt.title("ECG Signal with Modified Values around R-peaks")
+    plt.plot(time_axis, first_ekg_signal, label="Original ECG Signal")
+    plt.plot(time_axis, modified_signal, label="QRS-Complexes", linestyle="--", color="red")
+    plt.plot(r_peaks / freq, first_ekg_signal[r_peaks], "x", color="red", label="Detected R-peaks")
+    plt.title("ECG Signal with only the QRS-Complexes in red")
     plt.xlabel("Time (s)")
-    plt.ylabel("Amplitude")
+    plt.ylabel("Amplitude (mV)")
     plt.legend()
     plt.show()
