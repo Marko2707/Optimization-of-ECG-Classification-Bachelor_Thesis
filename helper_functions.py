@@ -95,7 +95,7 @@ def plot_all_classes(extracted_classes, extracted_ecg_ids, target_classes, x_tra
                     plt.plot(time_axis, ecg_data[:, lead], label=f"{lead_names[lead]}")
 
                 # Titel of the plot with each class
-                plt.title(f"ECG Signal - Class: {ecg_class}")
+                plt.title(f"ECG Signal - Class: {ecg_class} with {extracted_ecg_ids[i]}")
                 plt.xlabel("Time (s)") # Add the unit to the x-axis label
                 plt.ylabel("Amplitude (mV)")  # Add the unit to the y-axis label
                 plt.legend()

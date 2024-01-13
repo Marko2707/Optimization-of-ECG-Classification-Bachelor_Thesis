@@ -28,8 +28,10 @@ from classification_models.resnet1d import resnet1d_wang, resnet1d18
 #Import of PeakDetection Algorithms
 #PanTompkins++
 from peak_detection_algos.pan_tompkins_plus_plus import Pan_Tompkins_Plus_Plus
-#Wavelet Methods
-from peak_detection_algos.wavelet_based_method import cwt_r_peak_detection, dwt_r_peak_detection
+#My own adaptive Method
+from peak_detection_algos.Adaptive_Threshold import PeakReturner
+#Wavelet Method
+from peak_detection_algos.Wavelet import cwt_r_peak_detection_alg
 
 #imports for ResNet
 import torch
@@ -68,7 +70,7 @@ def main():
     #Defining the name of the files, to save the data
     x_train_unprocessed = numpy_path + "x_train_unprocessed.npy"
     x_test_unprocessed = numpy_path + "x_test_unprocessed.npy"
-    y_train_path = series_path + "y_train.pkl"
+    y_train_path = series_path + "y_train.pkl"  
     y_test_path = series_path + "y_test.pkl"
     
     #creates the folders to save the arrays
@@ -146,7 +148,7 @@ def main():
     #plot_choice = input("[Y]es for Plots, Press Enter to skip: \n").lower()
     #Is right now hardcoded to no for faster testing TODO change later
     plot_choice = "no"
-
+    #plot_choice = "yes"
 
     if(plot_choice in ["yes", "y", "ye", "j", "ja", "ok", "s", "si"]):
         plot_all_classes(extracted_classes= extracted_classes, extracted_ecg_ids= extracted_ecg_ids, target_classes=target_classes, x_train=x_train, y_train=y_train, number_no_superclass=number_no_superclass)
@@ -167,24 +169,39 @@ def main():
     #x_test_panTom = preprocess_pantompkinsPlusPlus(x_test, window_size= window_size)
 
     # Original data
+    #NORM
     original_data = x_train[0, :, 0]
+    #MI
+    original_data = x_train[8, :, 0]
+    #STTC
+    #original_data = x_train[22, :, 0]
+    #CD
+    original_data = x_train[32, :, 0]
+    #HYP
+    #original_data = x_train[30, :, 0]
 
+
+
+    print(original_data)
     #test of Wavelet Methods
+    adaptive_peaks = PeakReturner(ecg_data=original_data)
+    print(adaptive_peaks)
 
-    dwt_rpeaks = dwt_r_peak_detection(original_data)
-    print(dwt_rpeaks)
-
-    plt.plot(original_data, label='ECG Signal')
-    plt.plot(dwt_rpeaks, original_data[dwt_rpeaks], 'rx', label='DWT R-Peaks')
+    plt.plot(original_data, label="ECG Signal with my own Adaptive Threshold")
+    plt.plot(adaptive_peaks, original_data[adaptive_peaks], "rx", label="Peaks")
     plt.legend()
     plt.show()
 
+
+
+    cwt_r_peak_detection = cwt_r_peak_detection_alg(ecg_data=original_data)
+    print(cwt_r_peak_detection)
 
     # Modified data
     #modified_data = x_train_panTom[0, :, 0]
 
     #Length of Compressed Data to be removed
-    length_data_compressed = 700
+    length_data_compressed = 500
 
     x_train_panTom_compressed = preprocess_pantompkinsPlusPlusCompression(x_train, window_size= window_size, data_length=length_data_compressed)
     x_test_panTom_compressed = preprocess_pantompkinsPlusPlusCompression(x_test, window_size= window_size, data_length=length_data_compressed)
@@ -211,7 +228,7 @@ def main():
     # Machine Learning Phase -------------------------------------------------------------------------------------------------------------------------------------------
     # Wandeln Sie die Listen von Labels in binäre Vektoren um
     #initilizing a MultiLabelBinarizer to make the labels binary
-    mlb = MultiLabelBinarizer()
+    mlb = MultiLabelBinarizer() 
     #Transforming the Labels into binary representations
     y_train_multilabel = mlb.fit_transform(y_train)
     y_test_multilabel = mlb.transform(y_test)
@@ -534,7 +551,7 @@ def train_resnet1d_wang2(x_train, y_train_multilabel, x_test, y_test_multilabel,
     print("-------------------------------------------------------------")
 
     accuracy = sum([1 for true_label, pred_label in zip(y_test_entry, y_pred_entry) if true_label == pred_label]) / len(y_test_entry)
-    print(f'Accuracy Selfwritten: {accuracy}')
+    print(f"Accuracy Selfwritten: {accuracy}")
 
     """
     print(y_test_entry[:10])
