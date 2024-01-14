@@ -29,7 +29,7 @@ from classification_models.resnet1d import resnet1d_wang, resnet1d18
 #PanTompkins++
 from peak_detection_algos.pan_tompkins_plus_plus import Pan_Tompkins_Plus_Plus
 #My own adaptive Method
-from peak_detection_algos.Adaptive_Threshold import PeakReturner
+from peak_detection_algos.Adaptive_Threshold import adaptive_fixed_RPeakFinder, preprocess_adaptiveThresholdMethod
 #Wavelet Method
 from peak_detection_algos.Wavelet import cwt_r_peak_detection_alg
 
@@ -170,36 +170,34 @@ def main():
 
     # Original data
     #NORM
-    original_data = x_train[0, :, 0]
+    #original_data = x_train[0, :, 0]
     #MI
-    original_data = x_train[8, :, 0]
+    #original_data = x_train[8, :, 0]
     #STTC
     #original_data = x_train[22, :, 0]
     #CD
-    original_data = x_train[32, :, 0]
+    #original_data = x_train[32, :, 0]
     #HYP
-    #original_data = x_train[30, :, 0]
+    original_data = x_train[30, :, 0]
 
 
 
     print(original_data)
     #test of Wavelet Methods
-    adaptive_peaks = PeakReturner(ecg_data=original_data)
+    adaptive_peaks = adaptive_fixed_RPeakFinder(ecg_data=original_data)
     print(adaptive_peaks)
 
+    plt.title("R-Peak Detection with Adaptive and Fixed Thresholds")
     plt.plot(original_data, label="ECG Signal with my own Adaptive Threshold")
     plt.plot(adaptive_peaks, original_data[adaptive_peaks], "rx", label="Peaks")
     plt.legend()
     plt.show()
 
+    length_data_compressed = 500
 
-
-    cwt_r_peak_detection = cwt_r_peak_detection_alg(ecg_data=original_data)
-    print(cwt_r_peak_detection)
-
-    # Modified data
-    #modified_data = x_train_panTom[0, :, 0]
-
+    print("ADADS")
+    x_train_myData = preprocess_adaptiveThresholdMethod(ecg_data=x_train, window_size=window_size, data_length=length_data_compressed, )
+    print(f"Shape of My Data{x_train_myData.shape}")
     #Length of Compressed Data to be removed
     length_data_compressed = 500
 
@@ -233,10 +231,6 @@ def main():
     y_train_multilabel = mlb.fit_transform(y_train)
     y_test_multilabel = mlb.transform(y_test)
 
-        
-    #Expanding the dimension by one, necessary for the use with the model TODO Remove 
-    y_train_onehot = np.expand_dims(y_train_multilabel, axis=1)
-    y_test_onehot = np.expand_dims(y_test_multilabel, axis=1)
 
     #-----Modelllauf auf Pan Tompkins daten mit Komprimierung um 600 weniger Daten--------------------------------
     x_train_panTom_compressed = np.transpose(x_train_panTom_compressed, (0, 2, 1))
@@ -632,33 +626,6 @@ def dataCreation(pathname):
     y_test = Y[Y.strat_fold == test_fold].diagnostic_superclass
 
     return (X_train, y_train, X_test, y_test, Y)
-
-"""Unused Function right now"""
-def label_changer_stringToInt(classes, translation, y_train):
-    for ecg_id, ecg_classes in y_train.items():
-        if len(ecg_classes) < 1:
-            y_train[ecg_id] = 0
-        elif len(ecg_classes) == 1:
-            y_train[ecg_id] = translation[classes.index(ecg_classes[0])]
-        elif len(ecg_classes) == 2:
-            y_train[ecg_id][0] = translation[classes.index(ecg_classes[0])] 
-            y_train[ecg_id][1] = translation[classes.index(ecg_classes[1])]
-        elif len(ecg_classes) == 3:
-            y_train[ecg_id][0] = translation[classes.index(ecg_classes[0])] 
-            y_train[ecg_id][1] = translation[classes.index(ecg_classes[1])]
-            y_train[ecg_id][2] = translation[classes.index(ecg_classes[2])] 
-        elif len(ecg_classes) == 4:
-            y_train[ecg_id][0] = translation[classes.index(ecg_classes[0])] 
-            y_train[ecg_id][1] = translation[classes.index(ecg_classes[1])]
-            y_train[ecg_id][2] = translation[classes.index(ecg_classes[2])] 
-            y_train[ecg_id][3] = translation[classes.index(ecg_classes[3])]
-        else:
-            y_train[ecg_id][0] = translation[classes.index(ecg_classes[0])] 
-            y_train[ecg_id][1] = translation[classes.index(ecg_classes[1])]
-            y_train[ecg_id][2] = translation[classes.index(ecg_classes[2])] 
-            y_train[ecg_id][3] = translation[classes.index(ecg_classes[3])]
-            y_train[ecg_id][4] = translation[classes.index(ecg_classes[4])]
-    return y_train
 
 
 if __name__ == "__main__":
