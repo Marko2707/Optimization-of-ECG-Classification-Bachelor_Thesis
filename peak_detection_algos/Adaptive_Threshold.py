@@ -13,7 +13,7 @@ def adaptive_fixed_RPeakFinder(ecg_data):
     # Set threshold for peaks to be added adaptively
     adaptive_threshold = 0.8
     # Set threshold for peaks to be removed
-    removal_threshold = 0.8
+    removal_threshold = 0.75
     #Adding the first data
     peaks.append(abs(ecg_data[0]))
     peaks_index.append(count)
@@ -28,16 +28,21 @@ def adaptive_fixed_RPeakFinder(ecg_data):
                 peaks.remove(min(peaks))
                 peaks_index.pop(index_of_min)
     
+
+    #Removal Function with removal-threshold
     count = 0
     for i in peaks:
         if i <= removal_threshold* (sum(peaks)/len(peaks)):
-            count += 1
+            #count += 1# to see the problem of not having this for loop, using STTC example
             peaks.remove(i)
             peaks_index.pop(count)
+            count += 1
     
-    #Eliminating multiple indices which point to the same peaks
+
+    #Eliminating multiple indices which point to the same peaks and are adjacent to eachother
     #i = 0
     #Going from right to left
+    
     i = len(peaks_index)
     while i > 0: #len(peaks_index):
         try:

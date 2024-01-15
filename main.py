@@ -174,24 +174,29 @@ def main():
     #MI
     #original_data = x_train[8, :, 0]
     #STTC
-    #original_data = x_train[22, :, 0]
+    original_data = x_train[22, :, 0]
     #CD
     #original_data = x_train[32, :, 0]
     #HYP
-    original_data = x_train[30, :, 0]
+    #original_data = x_train[30, :, 0]
 
 
 
-    print(original_data)
-    #test of Wavelet Methods
+    #----------My Method----------------------------------------------------------
     adaptive_peaks = adaptive_fixed_RPeakFinder(ecg_data=original_data)
     print(adaptive_peaks)
 
+
+    plt.figure(figsize=(12, 6))
     plt.title("R-Peak Detection with Adaptive and Fixed Thresholds")
-    plt.plot(original_data, label="ECG Signal with my own Adaptive Threshold")
-    plt.plot(adaptive_peaks, original_data[adaptive_peaks], "rx", label="Peaks")
+    plt.plot(original_data, label="ECG Signal")
+    plt.plot(adaptive_peaks , original_data[adaptive_peaks], "rx", label="Detected R-Peaks")
+    plt.xlabel("Measurements with 100Hz over 10 Seconds")
+    plt.ylabel("Amplitude (mV)")
     plt.legend()
     plt.show()
+
+
 
     length_data_compressed = 500
 
