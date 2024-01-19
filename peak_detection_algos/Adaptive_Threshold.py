@@ -23,10 +23,7 @@ def adaptive_fixed_RPeakFinder(ecg_data):
         if abs(i) >= adaptive_threshold * (sum(peaks)/len(peaks)) and abs(i) >= maximum * fixed_threshold :
             peaks.append(abs(i))
             peaks_index.append(count)
-            if len(peaks)>25:
-                index_of_min = peaks.index(min(peaks))
-                peaks.remove(min(peaks))
-                peaks_index.pop(index_of_min)
+            
     
 
     #Removal Function with removal-threshold

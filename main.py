@@ -30,8 +30,11 @@ from classification_models.resnet1d import resnet1d_wang, resnet1d18
 from peak_detection_algos.pan_tompkins_plus_plus import Pan_Tompkins_Plus_Plus
 #My own adaptive Method
 from peak_detection_algos.Adaptive_Threshold import adaptive_fixed_RPeakFinder, preprocess_adaptiveThresholdMethod
+#SQRS Method
+from peak_detection_algos.peakdet_window_variability import SQRS_PreperationWithCompression
 #Wavelet Method
 from peak_detection_algos.Wavelet import cwt_r_peak_detection_alg
+
 
 #imports for ResNet
 import torch
@@ -39,7 +42,6 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import TensorDataset, DataLoader
 from sklearn.metrics import accuracy_score
-
 import torch
 from torch.utils.data import TensorDataset
 from sklearn.model_selection import StratifiedShuffleSplit
@@ -154,39 +156,29 @@ def main():
         plot_all_classes(extracted_classes= extracted_classes, extracted_ecg_ids= extracted_ecg_ids, target_classes=target_classes, x_train=x_train, y_train=y_train, number_no_superclass=number_no_superclass)
         plot_panTompkinsPlusPlus(x_train=x_train)
         
-        
-    #-----End of Plotting--------------------------
+    #-----End of Plotting----------------------------------------------------------------------------------------------
     
-   
-   
-
-    freq = 100
-    #the recording is 10 seconds --> 10 000 ms and a average qrs complex is 100ms
-    window_size = int(0.1 * freq)  # 100 ms window size
-
     #--Pan Tompkins Algorithm without 
     #x_train_panTom = preprocess_pantompkinsPlusPlus(x_train, window_size= window_size)
     #x_test_panTom = preprocess_pantompkinsPlusPlus(x_test, window_size= window_size)
 
     # Original data
     #NORM
-    #original_data = x_train[0, :, 0]
+    original_data = x_train[0, :, 0]
     #MI
     #original_data = x_train[8, :, 0]
     #STTC
-    original_data = x_train[22, :, 0]
+    #original_data = x_train[22, :, 0]
     #CD
     #original_data = x_train[32, :, 0]
     #HYP
     #original_data = x_train[30, :, 0]
 
 
-
-    #----------My Method----------------------------------------------------------
+    #----------My Method TEST----------------------------------------------------------TODO REMOVE
+    """
     adaptive_peaks = adaptive_fixed_RPeakFinder(ecg_data=original_data)
     print(adaptive_peaks)
-
-
     plt.figure(figsize=(12, 6))
     plt.title("R-Peak Detection with Adaptive and Fixed Thresholds")
     plt.plot(original_data, label="ECG Signal")
@@ -195,23 +187,36 @@ def main():
     plt.ylabel("Amplitude (mV)")
     plt.legend()
     plt.show()
+    """
+
+    #----DATA PREPROCESSING---------------------------------------------------------------------------------------------------
+    length_data_compressed = 500 #TODO Außerhalb der Funktion als globale Variable
+    freq = 100
+    #the recording is 10 seconds --> 10 000 ms and a average qrs complex is 100ms
+    window_size = int(0.1 * freq)  # 100 ms window size
+
+
+    #x_train_myData = preprocess_adaptiveThresholdMethod(ecg_data=x_train, window_size=window_size, data_length=length_data_compressed, )
+    #print(f"Shape of My Data{x_train_myData.shape}")
+   
 
 
 
-    length_data_compressed = 500
-
-    print("ADADS")
-    x_train_myData = preprocess_adaptiveThresholdMethod(ecg_data=x_train, window_size=window_size, data_length=length_data_compressed, )
-    print(f"Shape of My Data{x_train_myData.shape}")
-    #Length of Compressed Data to be removed
-    length_data_compressed = 500
-
+    # Machine Learning Phase -------------------------------------------------------------------------------------------------------------------------------------------
+    # Wandeln Sie die Listen von Labels in binäre Vektoren um
+    #initilizing a MultiLabelBinarizer to make the labels binary
+    mlb = MultiLabelBinarizer() 
+    #Transforming the Labels into binary representations
+    y_train_multilabel = mlb.fit_transform(y_train)
+    y_test_multilabel = mlb.transform(y_test)
+    
+    
+    #-----Modelllauf auf Pan Tompkins daten mit Komprimierung um 500 weniger Daten--------------------------------
     x_train_panTom_compressed = preprocess_pantompkinsPlusPlusCompression(x_train, window_size= window_size, data_length=length_data_compressed)
     x_test_panTom_compressed = preprocess_pantompkinsPlusPlusCompression(x_test, window_size= window_size, data_length=length_data_compressed)
-
-
-    more_modified_data = x_train_panTom_compressed[0, :, 0]
     
+    """
+    more_modified_data = x_train_panTom_compressed[0, :, 0]
     # Plots the difference in the data and PanTompkins preprocessed Data
     plt.figure(figsize=(12, 6))
     plt.plot(original_data, label="Original Data", color="blue")
@@ -222,45 +227,18 @@ def main():
     plt.ylabel("Amplitude (mV)")
     plt.legend()
     plt.show()
-    
+    """
+
     print(f"Shape of x_train {x_train.shape}, Shape of x_test {x_test.shape}, Shape of y_train {y_train.shape} and Shape of y_test {y_test.shape}")
     print(f"First 9 Labels of PandaSeries y_train:{y_train[:8]}")
     print(f"First lead of the first ecg data the first 10{x_train[0][:10][0]}")
 
-
-    # Machine Learning Phase -------------------------------------------------------------------------------------------------------------------------------------------
-    # Wandeln Sie die Listen von Labels in binäre Vektoren um
-    #initilizing a MultiLabelBinarizer to make the labels binary
-    mlb = MultiLabelBinarizer() 
-    #Transforming the Labels into binary representations
-    y_train_multilabel = mlb.fit_transform(y_train)
-    y_test_multilabel = mlb.transform(y_test)
+    print("PanTomp Testlauf")
+    model_run(x_train=x_train_panTom_compressed, x_test=x_test_panTom_compressed, y_train_multilabel=y_train_multilabel,y_test_multilabel= y_test_multilabel, type_of_data="PanTompkins++ Compressed Data", epochs=2, length_data_compressed=length_data_compressed)
+    
 
 
-    #-----Modelllauf auf Pan Tompkins daten mit Komprimierung um 600 weniger Daten--------------------------------
-    x_train_panTom_compressed = np.transpose(x_train_panTom_compressed, (0, 2, 1))
-    x_test_panTom_compressed = np.transpose(x_test_panTom_compressed, (0, 2, 1))
-
-
-
-    # Assuming x_train_panTom and x_test_panTom have shapes (19601, 12, x) and (2198, 12, x), respectively
-    x_train_reshaped = x_train_panTom_compressed[:, 0, :].reshape(-1, 1, (1000 - length_data_compressed))   
-    x_test_reshaped = x_test_panTom_compressed[:, 0, :].reshape(-1, 1, (1000 - length_data_compressed))
-
-    print(f"Shapes x: {x_train_reshaped.shape} and {x_test_reshaped.shape}")
-    print(f"Shapes y: {y_train_multilabel.shape} and {y_test_multilabel.shape} ")
-
-    #starting the countdown, to see how long the raw data model takes
-    start = tm.time()
-    #initializing the model resnet1d_wang, explicitly the function train_resnet1d_wang (Returns the Metric results for each Class Entry)
-    #We use all classes and all samples but only one of the 12 leads for performance reasons
-    model = train_resnet1d_wang2(x_train_reshaped, y_train_multilabel,  x_test_reshaped, y_test_multilabel, epochs=2, batch_size=32, num_splits=10, type_of_data="PanTompkins++ Compressed Data")
-    end = tm.time()
-    time = end - start
-    #Prints the time it took to train and evalutate the model:
-    print(f"Training and Evaluation time on PanTompkins with compression processed Data: {time}")
-
-    #-----Modelllauf auf Pan Tompkins daten----------------------------------------------------------------------
+    #-----Modelllauf auf Pan Tompkins daten---------------------------------------------------------------------- 
     """
     x_train_panTom = np.transpose(x_train_panTom, (0, 2, 1))
     x_test_panTom = np.transpose(x_test_panTom, (0, 2, 1))
@@ -287,14 +265,33 @@ def main():
     """
     
     #--------------Modellauf auf rohdaten----------------------------------------------------------------------
+    model_run(x_train=x_train, x_test=x_test, y_train_multilabel=y_train_multilabel,y_test_multilabel= y_test_multilabel, type_of_data="Raw Data", epochs=2)
+    
+    #------------Modelllauf auf meinen Algorithmus-----------------------------------
+    print("Test on My Algorithm:")
+    x_train_myData = preprocess_adaptiveThresholdMethod(x_train, window_size=window_size, data_length=length_data_compressed)
+    x_test_myData = preprocess_adaptiveThresholdMethod(x_test, window_size=window_size, data_length=length_data_compressed)
+    model_run(x_train=x_train_myData, x_test=x_test_myData, y_train_multilabel=y_train_multilabel,y_test_multilabel= y_test_multilabel, type_of_data="MyOwnMethod", epochs=2, length_data_compressed=length_data_compressed)
 
+    #-----SQRS---------------------------
+    print("TEST des SQRS")
+    x_train_SQRS = SQRS_PreperationWithCompression(x_train, window_size=window_size, data_length=length_data_compressed)
+    x_test_SQRS = SQRS_PreperationWithCompression(x_test, window_size=window_size, data_length=length_data_compressed)
+
+    print("X_TRAIN_SQRS SHAPE: ", x_train_SQRS.shape, "X_TEST_SQRS SHAPE: ", x_test_SQRS.shape)
+    
+    model_run(x_train=x_train_SQRS, x_test=x_test_SQRS, y_train_multilabel=y_train_multilabel,y_test_multilabel= y_test_multilabel, type_of_data="SQRS Compressed Data", epochs=2, length_data_compressed=length_data_compressed)
+
+    
+
+def model_run(x_train, x_test, y_train_multilabel, y_test_multilabel, type_of_data, epochs=1, length_data_compressed=0 ):
     #Sorting the Data, so that it fits the expected way of the models
     x_train = np.transpose(x_train, (0, 2, 1))
     x_test = np.transpose(x_test, (0, 2, 1))
 
     # Assuming x_train and x_test have shapes (19601, 12, 1000) and (2198, 12, 1000), respectively
-    x_train_reshaped = x_train[:, 0, :].reshape(-1, 1, 1000)
-    x_test_reshaped = x_test[:, 0, :].reshape(-1, 1, 1000)
+    x_train_reshaped = x_train[:, 0, :].reshape(-1, 1, (1000 - length_data_compressed))
+    x_test_reshaped = x_test[:, 0, :].reshape(-1, 1, (1000 - length_data_compressed))
 
     print(f"Shapes x: {x_train.shape} und {x_test.shape}")
     print(f"Shapes y: {y_train_multilabel.shape} and {y_test_multilabel.shape} ")
@@ -303,12 +300,10 @@ def main():
     start = tm.time()
     #initializing the model resnet1d_wang, explicitly the function train_resnet1d_wang (Returns the Metric results for each Class Entry)
     #We use all classes and all samples but only one of the 12 leads for performance reasons
-    model = train_resnet1d_wang2(x_train_reshaped, y_train_multilabel,  x_test_reshaped, y_test_multilabel, epochs=2, batch_size=32, num_splits=10, type_of_data="Raw Data")
+    model = train_resnet1d_wang2(x_train_reshaped, y_train_multilabel,  x_test_reshaped, y_test_multilabel, epochs=epochs, batch_size=32, num_splits=10, type_of_data=type_of_data)
     end = tm.time()
     time = end - start
-    #Prints the time it took to train and evalutate the model:
-    print(f"Training and Evaluation time on unprocessed Data: {time}")
-    
+    print(f"Training and Evaluation time on {type_of_data}: {time}")
 
    
 """ Function which only lets the QRS Complexes in the data be"""
@@ -371,7 +366,7 @@ def preprocess_pantompkinsPlusPlusCompression(ecg_data, window_size, data_length
             starting_point = end_point + 5
 
 
-    #Remove the last 500 measurements along the second axis
+    #Remove the last data_length measurements along the second axis
     modified_ecg_data = modified_ecg_data[:, :-data_length, :]
 
     print(modified_ecg_data.shape)
@@ -421,51 +416,57 @@ def train_resnet1d_wang2(x_train, y_train_multilabel, x_test, y_test_multilabel,
     #On my Hardware it was the RTX 2070 Super, which should use CUDA 12.1 Pytorch
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    #Converting the data to Pytorch Tensors to allow for learning
+    #Converting the data to Pytorch Tensors datastruchtures to allow for learning
     x_train_tensor = torch.from_numpy(x_train).float().to(device)
     y_train_tensor = torch.from_numpy(y_train_multilabel).float().to(device)
     x_test_tensor = torch.from_numpy(x_test).float().to(device)
     y_test_tensor = torch.from_numpy(y_test_multilabel).float().to(device)
 
+    #---NOT USED right now, due to the StratifiedShuffleSplit----
     #Creating a Pytorch Dataset and a pytorch DataLoader
-    train_dataset = TensorDataset(x_train_tensor, y_train_tensor)
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    #train_dataset = TensorDataset(x_train_tensor, y_train_tensor)
+    #NOT USED due to the StratifiedShuffleSplit, since we train with the splits
+    #train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
     #Intitilizing the model from: https://github.com/helme/ecg_ptbxl_benchmarking
     model = resnet1d_wang(input_channels=1, num_classes= classes).to(device)
-    #Defining the Loss Function and the optimizer
-    criterion = nn.BCEWithLogitsLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-    #Splits the data for Training, num_splits is 10 as wanted by the PTB-XL Benchmark
-    sss = StratifiedShuffleSplit(n_splits=num_splits, test_size=0.2, random_state=42)
+    #Defining the Loss Function and the optimizer
+    criterion = nn.BCEWithLogitsLoss() #Binary Cross Entropy Loss (Either True or False)
+    optimizer = optim.Adam(model.parameters(), lr=0.001) #adjusts the models parameters based on the loss function
+
+    #Splits the data for TRAINING into Train/Test Split
+    #NumSplits is 10 in accordance to PTB-XL --> Split into 10 different train and validation sets
+    #80% of all 10 is training and 20% is for the validation process (test_size=0.2)
+    sss = StratifiedShuffleSplit(n_splits=num_splits, test_size=0.2, random_state=None) #random_state sets the seed (For reproducing results -->42)
 
     #Training the model across the given epochs
     for epoch in range(epochs):
-        print(f"Epoch {epoch + 1}/{epochs}")
-        #
-        for train_index, valid_index in sss.split(x_train, y_train_multilabel.argmax(axis=1)):
-            # Dividing the data in training and validation
-            # This part is important, so that under each training iteration the model can get tested to improve
+        print(f"Epoch {epoch + 1}/{epochs}")#returns the epoch right now
+        #Gives the 10 random splits for training for each epoc
+        for train_index, valid_index in sss.split(x_train, y_train_multilabel.argmax(axis=1)):#Splits both x_train and y_train to stay connected
+            #Dividing the data in training and validation
+            #This part is important, so that under each training iteration the model can get tested to improve
             x_train_fold, x_valid_fold = x_train[train_index], x_train[valid_index]
             y_train_fold, y_valid_fold = y_train_multilabel[train_index], y_train_multilabel[valid_index]
 
 
-            #Creating further tensors the training data
+            #Creating further tensors of the newly formed training data
             #Dividing it into training and validation tensors
             x_train_fold_tensor = torch.from_numpy(x_train_fold).float().to(device)
             y_train_fold_tensor = torch.from_numpy(y_train_fold).float().to(device)
             x_valid_fold_tensor = torch.from_numpy(x_valid_fold).float().to(device)
             y_valid_fold_tensor = torch.from_numpy(y_valid_fold).float().to(device)
 
-            # creation of pytorch datasets and dataloaders for the training 
+            #creation of pytorch datasets and dataloaders for the training 
             train_fold_dataset = TensorDataset(x_train_fold_tensor, y_train_fold_tensor)
             train_fold_loader = DataLoader(train_fold_dataset, batch_size=batch_size, shuffle=True)
+
             # creation of pytorch datasets and dataloaders but for the validation 
             valid_fold_dataset = TensorDataset(x_valid_fold_tensor, y_valid_fold_tensor)
             valid_fold_loader = DataLoader(valid_fold_dataset, batch_size=batch_size, shuffle=False)
 
-            #training the model
+            #Training the Model on 80%
             model.train()
             for inputs, labels in train_fold_loader:
                 optimizer.zero_grad()
@@ -475,7 +476,7 @@ def train_resnet1d_wang2(x_train, y_train_multilabel, x_test, y_test_multilabel,
                 loss.backward()
                 optimizer.step()
 
-            # Validating the model
+            #Validating the model during the Training process according to the SSS split  20%
             model.eval()
             total_loss = 0.0
             with torch.no_grad():
@@ -484,26 +485,26 @@ def train_resnet1d_wang2(x_train, y_train_multilabel, x_test, y_test_multilabel,
                     total_loss += criterion(outputs, labels).item()
 
             avg_loss = total_loss / len(valid_fold_loader)
-            print(f"  Validation Loss: {avg_loss:.4f}")
+            print(f"  Validation Loss: {avg_loss:.4f}")#Returning the Validation Loss (Indication on how well the model is learing toi generalize)
 
-    # testing the model on how it runs
+    #Testing the model on the actual final Validation Data
     model.eval()
     with torch.no_grad():
         test_outputs = model(x_test_tensor)
         test_loss = criterion(test_outputs, y_test_tensor).item()
 
-    print(f"Test Loss: {test_loss:.4f}")
+    print(f"Test Loss: {test_loss:.4f}")#Printing the Final Test Loss
 
+    #Preparing the Data for the Evaluatiin 
     #Gives a Prediction as Float as to how likely the prediction data is true
     y_test_pred = torch.sigmoid(test_outputs).cpu().numpy()
     y_test_true = y_test_tensor.cpu().numpy()
-
     print(f"Shapes of data {y_test_pred.shape} and {y_test_true.shape}")
-
     #threshold value on which the prediction percentage is supposed to be done into True Value
-    threshold = 0.4
+    threshold = 0.4 #TODO Move to the Start, 0.4 resulted in the best results
+    
     print(f"Threshold is set at --{threshold}--")
-    # Rounding the values of the prediction into 1 and 0 based on the threshold above
+    #Rounding the values of the prediction into 1 and 0 based on the threshold above
     y_test_pred_rounded = np.where(y_test_pred >= threshold, 1, 0)
    
     """
@@ -529,7 +530,7 @@ def train_resnet1d_wang2(x_train, y_train_multilabel, x_test, y_test_multilabel,
     #Converting to a  list, each value being in the right orderin the prediction as in the actual values
     y_pred_entry = y_pred_entry.tolist()
 
-    print(f"--------Results for {type_of_data}---------------------------")
+    print(f"--------Results for {type_of_data}------------------------------------")
 
     print("Metrics tested for each Instance of all classes:")
 
@@ -547,10 +548,11 @@ def train_resnet1d_wang2(x_train, y_train_multilabel, x_test, y_test_multilabel,
     fmax_score_eachEntry = f1_score(y_test_entry, y_pred_entry, average="weighted")
 
     print(f"F-Max Score Each Entry: {fmax_score_eachEntry}")
-    print("-------------------------------------------------------------")
+    print("------------------------------------------------------------------------")
 
-    accuracy = sum([1 for true_label, pred_label in zip(y_test_entry, y_pred_entry) if true_label == pred_label]) / len(y_test_entry)
-    print(f"Accuracy Selfwritten: {accuracy}")
+    #Checkup if the functions worked: TODO REMOVE
+    #accuracy = sum([1 for true_label, pred_label in zip(y_test_entry, y_pred_entry) if true_label == pred_label]) / len(y_test_entry)
+    #print(f"Accuracy Selfwritten: {accuracy}")
 
     """
     print(y_test_entry[:10])

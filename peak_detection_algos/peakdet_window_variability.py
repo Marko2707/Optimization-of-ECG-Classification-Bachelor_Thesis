@@ -44,11 +44,50 @@ def main():
     SQRS_execution(ecg_data=original_data)
 
 
+def SQRS_PreperationWithCompression(ecg_data, window_size, data_length=500):
+    # creates the same data filled with only zeros
+    modified_ecg_data = np.zeros_like(ecg_data)
+
+    print("Processing Data with SQRS and Compression")
+    for i in range(ecg_data.shape[0]):
+        #T aking the first lead for each sample
+        first_lead = ecg_data[i, :, 0]
+        if i % 500 == 0:
+            print(i)
+        # applying the peak detection algorithm on each sampole
+        freq = 100
+        
+        r_peaks_indices = SQRS_execution(first_lead)
+
+        #print(i, " : ", r_peaks_indices)
+        
+        starting_point = 0
+        for peak_index in r_peaks_indices:
+            #setting the first window infront of the rpeak, or start of the data
+            start_index = max(0, peak_index - window_size)
+
+            #setting the window after the rpeak or end of the data
+            #len(first_lead) is 1000
+            end_index = min(len(first_lead), peak_index + window_size + 1)
+            end_point = end_index - start_index + starting_point
+
+            # Keep the R-peaks and 100 seconds before and after unchanged
+            modified_ecg_data[i, starting_point:end_point, 0] = ecg_data[i, start_index:end_index, 0]
+            starting_point = end_point + 5
+
+
+    #Remove the last 500 measurements along the second axis
+    modified_ecg_data = modified_ecg_data[:, :-data_length, :]
+
+    print(modified_ecg_data.shape)
+    return modified_ecg_data
+
 
 def SQRS_execution(ecg_data):
     
     #Tester for different ECG Data
-    first_lead = ecg_data[22, :, 0]
+    #first_lead = ecg_data[32, :, 0]
+    first_lead = ecg_data
 
     #Original work had one of 5, but 3 yielded better results though does not smooth the signal as much 
     filterlengthM = 3 #5
@@ -89,25 +128,28 @@ def SQRS_execution(ecg_data):
     #Step 1: Generate potential R-peaks candidates
     R_peaks_candidates = generate_R_peaks_candidates(SWVT_transform)
 
-    print(f"Peak Candidates:: {R_peaks_candidates}")
+    #print(f"Peak Candidates:: {R_peaks_candidates}")
     #Step 2: Generate R-peaks with decision rules
     R_peaks = generate_R_peaks_with_decision_rules(SWVT_transform, R_peaks_candidates, RR_recent, RR_all)
 
-    print(f"Final Peaks: {R_peaks}")
+    #print(f"Final Peaks: {R_peaks}")
     
-    
+    """
     #Plotting the signal 
     plt.figure(figsize=(12, 6))
-    plt.plot(first_lead, label="Original ECG Signal")
+    #plt.plot(first_lead, label="Original ECG Signal")
     #plt.plot(denoised_ecg_data, label="Denoised ECG Data", color="red")
-    #plt.plot(squared_signal, label="Squared Stuff", color ="green")
-    plt.plot(R_peaks, squared_signal[R_peaks], "x", color="red", label="Detected R-peaks")
-    plt.title("ECG Signal with only the QRS-Complexes in red")
-    plt.xlabel("Time (s)")
+    plt.plot(squared_signal, label="Squared Stuff", color ="green")
+    #plt.plot(R_peaks, squared_signal[R_peaks], "x", color="red", label="Detected R-peaks")
+    plt.title("SWVT Signal")
+    plt.xlabel("Measurements with 100Hz across 10 seconds")
     plt.ylabel("Amplitude (mV)")
     plt.legend()
     plt.show()
+    """
+    return R_peaks
 
+"""Enhances the Signal using WVT and SWVT to make the QRS-Complexes stand out more"""
 def ecg_enhancement(denoised_signal):
 
     #1. Non-overlapping window generation-----------------------------------------------------------
@@ -177,7 +219,7 @@ def generate_R_peaks_candidates(SWVT_transform):
     
     return R_peaks_candidates
 
-
+"""Generates the final RPeaks"""
 def generate_R_peaks_with_decision_rules(SWVT_transform, R_peaks_candidates, RR_recent, RR_all, alpha=0.5):
     #2. Generation of the R-peaks with decision rules
 
@@ -229,14 +271,14 @@ def generate_R_peaks_with_decision_rules(SWVT_transform, R_peaks_candidates, RR_
             #Setting the start where we start our Backsearch
             search_back_position = max(0, candidate - search_back_interval)
 
-            print(f"SeachBack Position: {search_back_position}:{candidate}")
+            #print(f"SeachBack Position: {search_back_position}:{candidate}")
             
             #Check decision rules for R-peaks in the search-back interval Utilization of Formulas (9,10) with NEW THRESHOLDS
             #Checking for the biggest peak in the searchback interval
             if SWVT_transform[search_back_position:candidate].max() > Ta_back_search and kurtosis(SWVT_transform[search_back_position:candidate]).max() > Tk_back_search:
-                print("BackSearch")
+                #print("BackSearch")
                 RR = RRcalc(R_peaks, RR)
-                print("Addition in BackSearch: ", candidate)
+                #print("Addition in BackSearch: ", candidate)
                 R_peaks.append(candidate)
 
                 #TODO Remove if tests are as expected
@@ -259,23 +301,18 @@ def generate_R_peaks_with_decision_rules(SWVT_transform, R_peaks_candidates, RR_
     # 3. Generation of the R-peaks with decision rules
     newest_Rpeak = 0 #If non was found, set it to the start of signal ==> 0 
     not_found_count = 0 #Amount of time since last found R_peak ==> Measurements 
-    print(f"RR : {RR}")
+    #print(f"RR : {RR}")
 
     for candidate in R_peaks_candidates:
         #Checking if candidate is viable and if R_peaks is empty --> True
         if (0.92 * RR < candidate - newest_Rpeak < 1.16 * RR) if R_peaks else True:
             #Check decision rules for R-peaks based on formula (11,12)
             if SWVT_transform[candidate] > Ta and kurtosis(SWVT_transform[R_peaks_candidates]) > Tk:
-                print("Addition in first search: ", candidate)
+                #print("Addition in first search: ", candidate)
                 R_peaks.append(candidate)#Found R_peak gets included
                 newest_Rpeak = candidate
                 RR = RRcalc(R_peaks, RR)
 
-                Ta = 0.75 * (alpha * np.percentile(SWVT_transform[R_peaks_candidates], 90) + (1 - alpha) * np.mean(SWVT_transform[R_peaks]))
-                Ta_back_search = 0.5 * Ta
-                if len(R_peaks) >= 2:
-                    Tk = 0.75 * (alpha * np.percentile(kurtosis(SWVT_transform[R_peaks_candidates]), 90) + (1 - alpha) * np.mean(kurtosis(SWVT_transform[R_peaks])))
-                    Tk_back_search = 0.5 * Tk
 
             #Backwards Search if Threholds did not work and Peak not found in 1.66 RR time
             elif not_found_count >= 1.66 * RR:
