@@ -205,10 +205,7 @@ def resnet1d_wang(input_channels=1, num_classes=5, **kwargs):
         kwargs["pooling_stem"] = False
     if "inplanes" not in kwargs.keys():
         kwargs["inplanes"] = 128
-
-    # Setze layers auf eine geeignete Liste von Schichten (z.B. [2, 2, 2, 2] für ResNet18)
     layers = [2, 2, 2, 2]
-
     return ResNet1d(BasicBlock1d, layers=layers, input_channels=input_channels, num_classes=num_classes, **kwargs)
 
 

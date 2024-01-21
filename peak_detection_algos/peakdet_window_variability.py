@@ -86,7 +86,7 @@ def SQRS_PreperationWithCompression(ecg_data, window_size, data_length=500):
 def SQRS_execution(ecg_data):
     
     #Tester for different ECG Data
-    #first_lead = ecg_data[32, :, 0]
+    #first_lead = ecg_data[22, :, 0]
     first_lead = ecg_data
 
     #Original work had one of 5, but 3 yielded better results though does not smooth the signal as much 
@@ -350,4 +350,4 @@ def generate_R_peaks_with_decision_rules(SWVT_transform, R_peaks_candidates, RR_
 
 
 #Runs the test
-main()
+#main()

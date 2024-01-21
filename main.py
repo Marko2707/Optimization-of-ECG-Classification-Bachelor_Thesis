@@ -13,6 +13,8 @@ import pandas as pd
 import time as tm
 import matplotlib.pyplot as plt
 
+#TODO Remove
+import sys
 
 #Machine Learning Stuff
 from sklearn.metrics import accuracy_score, precision_score, f1_score, roc_auc_score, recall_score
@@ -46,8 +48,10 @@ import torch
 from torch.utils.data import TensorDataset
 from sklearn.model_selection import StratifiedShuffleSplit
 
+#import for lstm
+from classification_models.lstm import train_lstm, LSTMModel, model_runLSTM
 
-
+#TODO ADD Several Parameters as Global Variables, to be adjusted here
 #add the folder where your ptb-xl data is 
 # the path structure under windows should than be: "C:/Users/marko/Desktop/bachelor_arbeit/code/PTB-XL", the PTB-XL dataset should be inside the path
 pathname = "C:/Users/marko/Desktop/bachelor_arbeit/code/"
@@ -200,17 +204,23 @@ def main():
     #print(f"Shape of My Data{x_train_myData.shape}")
    
 
-
+    
 
     # Machine Learning Phase -------------------------------------------------------------------------------------------------------------------------------------------
     # Wandeln Sie die Listen von Labels in binäre Vektoren um
     #initilizing a MultiLabelBinarizer to make the labels binary
     mlb = MultiLabelBinarizer() 
     #Transforming the Labels into binary representations
-    y_train_multilabel = mlb.fit_transform(y_train)
+    y_train_multilabel = mlb.fit_transform(y_train)     
     y_test_multilabel = mlb.transform(y_test)
     
-    
+    #(1)-------------Model Run on RAW DATA ----------------------------------------------------------------------
+    print("Run on raw Data")
+    model_runLSTM(x_train, x_test, y_train_multilabel, y_test_multilabel, type_of_data="RawData on LSTM", epochs=25, length_data_compressed=0)
+    sys.exit()
+    #model_run(x_train=x_train, x_test=x_test, y_train_multilabel=y_train_multilabel,y_test_multilabel= y_test_multilabel, type_of_data="Raw Data on ResNet", epochs=2)
+
+
     #-----Modelllauf auf Pan Tompkins daten mit Komprimierung um 500 weniger Daten--------------------------------
     x_train_panTom_compressed = preprocess_pantompkinsPlusPlusCompression(x_train, window_size= window_size, data_length=length_data_compressed)
     x_test_panTom_compressed = preprocess_pantompkinsPlusPlusCompression(x_test, window_size= window_size, data_length=length_data_compressed)
@@ -234,7 +244,10 @@ def main():
     print(f"First lead of the first ecg data the first 10{x_train[0][:10][0]}")
 
     print("PanTomp Testlauf")
-    model_run(x_train=x_train_panTom_compressed, x_test=x_test_panTom_compressed, y_train_multilabel=y_train_multilabel,y_test_multilabel= y_test_multilabel, type_of_data="PanTompkins++ Compressed Data", epochs=2, length_data_compressed=length_data_compressed)
+    print("LSTM 1")
+    model_runLSTM(x_train=x_train_panTom_compressed, x_test=x_test_panTom_compressed, y_train_multilabel=y_train_multilabel,y_test_multilabel= y_test_multilabel, type_of_data="PanTompkins++ Compressed Data", epochs=25, length_data_compressed=length_data_compressed)
+
+    #model_run(x_train=x_train_panTom_compressed, x_test=x_test_panTom_compressed, y_train_multilabel=y_train_multilabel,y_test_multilabel= y_test_multilabel, type_of_data="PanTompkins++ Compressed Data", epochs=2, length_data_compressed=length_data_compressed)
     
 
 
@@ -300,12 +313,18 @@ def model_run(x_train, x_test, y_train_multilabel, y_test_multilabel, type_of_da
     start = tm.time()
     #initializing the model resnet1d_wang, explicitly the function train_resnet1d_wang (Returns the Metric results for each Class Entry)
     #We use all classes and all samples but only one of the 12 leads for performance reasons
+    #model = train_lstm(x_train, y_train_multilabel, x_test, y_test_multilabel, epochs=10, batch_size=32, num_splits=10, classes=5, type_of_data="data")
     model = train_resnet1d_wang2(x_train_reshaped, y_train_multilabel,  x_test_reshaped, y_test_multilabel, epochs=epochs, batch_size=32, num_splits=10, type_of_data=type_of_data)
     end = tm.time()
     time = end - start
     print(f"Training and Evaluation time on {type_of_data}: {time}")
 
-   
+
+
+
+
+
+
 """ Function which only lets the QRS Complexes in the data be"""
 def preprocess_pantompkinsPlusPlus(ecg_data, window_size):
     # creates the same data filled with only zeros
@@ -402,7 +421,7 @@ def train_resnet1d_wang2(x_train, y_train_multilabel, x_test, y_test_multilabel,
     """
     Trains the 1D ResNet model resnet1d_wang from the https://github.com/helme/ecg_ptbxl_benchmarking on ECG data.
 
-    Parameters:
+    The different Parameters:
     - x_train: Training data .
     - y_train_multilabel:encoded training data labels.
     - x_test: Test data .
@@ -419,6 +438,7 @@ def train_resnet1d_wang2(x_train, y_train_multilabel, x_test, y_test_multilabel,
     #Converting the data to Pytorch Tensors datastruchtures to allow for learning
     x_train_tensor = torch.from_numpy(x_train).float().to(device)
     y_train_tensor = torch.from_numpy(y_train_multilabel).float().to(device)
+    
     x_test_tensor = torch.from_numpy(x_test).float().to(device)
     y_test_tensor = torch.from_numpy(y_test_multilabel).float().to(device)
 

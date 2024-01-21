@@ -24,8 +24,6 @@ def adaptive_fixed_RPeakFinder(ecg_data):
             peaks.append(abs(i))
             peaks_index.append(count)
             
-    
-
     #Removal Function with removal-threshold
     count = 0
     for i in peaks:
