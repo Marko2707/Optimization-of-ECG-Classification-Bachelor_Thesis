@@ -49,7 +49,10 @@ from torch.utils.data import TensorDataset
 from sklearn.model_selection import StratifiedShuffleSplit
 
 #import for lstm
-from classification_models.lstm import train_lstm, LSTMModel, model_runLSTM
+from classification_models.lstm import model_runLSTM
+
+#import general modelrunner
+from classification_models.general import model_runGeneral
 
 #TODO ADD Several Parameters as Global Variables, to be adjusted here
 #add the folder where your ptb-xl data is 
@@ -216,8 +219,13 @@ def main():
     
     #(1)-------------Model Run on RAW DATA ----------------------------------------------------------------------
     print("Run on raw Data")
-    model_runLSTM(x_train, x_test, y_train_multilabel, y_test_multilabel, type_of_data="RawData on LSTM", epochs=25, length_data_compressed=0)
-    sys.exit()
+    #model_runGeneral(x_train, x_test, y_train_multilabel, y_test_multilabel, type_of_data="RawData on LSTM", epochs=5, length_data_compressed=0)
+    RawTimeStart = tm.time()
+    model_runLSTM(x_train, x_test, y_train_multilabel, y_test_multilabel, type_of_data="RawData on LSTM", epochs=8, length_data_compressed=0)
+    RawTimeEnd = tm.time()
+
+
+    #sys.exit()
     #model_run(x_train=x_train, x_test=x_test, y_train_multilabel=y_train_multilabel,y_test_multilabel= y_test_multilabel, type_of_data="Raw Data on ResNet", epochs=2)
 
 
@@ -239,14 +247,18 @@ def main():
     plt.show()
     """
 
-    print(f"Shape of x_train {x_train.shape}, Shape of x_test {x_test.shape}, Shape of y_train {y_train.shape} and Shape of y_test {y_test.shape}")
-    print(f"First 9 Labels of PandaSeries y_train:{y_train[:8]}")
-    print(f"First lead of the first ecg data the first 10{x_train[0][:10][0]}")
+    #print(f"Shape of x_train {x_train.shape}, Shape of x_test {x_test.shape}, Shape of y_train {y_train.shape} and Shape of y_test {y_test.shape}")
+    #print(f"First 9 Labels of PandaSeries y_train:{y_train[:8]}")
+    #print(f"First lead of the first ecg data the first 10{x_train[0][:10][0]}")
 
     print("PanTomp Testlauf")
     print("LSTM 1")
-    model_runLSTM(x_train=x_train_panTom_compressed, x_test=x_test_panTom_compressed, y_train_multilabel=y_train_multilabel,y_test_multilabel= y_test_multilabel, type_of_data="PanTompkins++ Compressed Data", epochs=25, length_data_compressed=length_data_compressed)
-
+    CompTimeStart = tm.time()
+    model_runLSTM(x_train=x_train_panTom_compressed, x_test=x_test_panTom_compressed, y_train_multilabel=y_train_multilabel,y_test_multilabel= y_test_multilabel, type_of_data="PanTompkins++ Compressed Data", epochs=8, length_data_compressed=length_data_compressed)
+    CompTimeEnd = tm.time()
+    print(f"RUNTIME RawData = {RawTimeEnd-RawTimeStart}")
+    print(f"RUNTIME Compressed = {CompTimeEnd-CompTimeStart}")
+    sys.exit()
     #model_run(x_train=x_train_panTom_compressed, x_test=x_test_panTom_compressed, y_train_multilabel=y_train_multilabel,y_test_multilabel= y_test_multilabel, type_of_data="PanTompkins++ Compressed Data", epochs=2, length_data_compressed=length_data_compressed)
     
 
@@ -318,9 +330,6 @@ def model_run(x_train, x_test, y_train_multilabel, y_test_multilabel, type_of_da
     end = tm.time()
     time = end - start
     print(f"Training and Evaluation time on {type_of_data}: {time}")
-
-
-
 
 
 

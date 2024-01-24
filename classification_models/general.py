@@ -6,27 +6,10 @@ from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score, f1_score
 import numpy as np
 import time as tm
-import torch.nn.functional as F
+import torchvision.models as models
 
 
-class LSTM(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, num_classes, dropout=0.5):
-        super(LSTM, self).__init__()
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True, bidirectional=True)
-        self.dropout = nn.Dropout(dropout)
-        self.layer_norm = nn.LayerNorm(hidden_size * 2)  # For bidirectional LSTM
-        self.attention = nn.MultiheadAttention(embed_dim=hidden_size * 2, num_heads=1)  # Adjust num_heads as needed
-        self.fc = nn.Linear(hidden_size * 2, num_classes)
-
-    def forward(self, x):
-        out, _ = self.lstm(x)
-        out = self.layer_norm(out)
-        out, _ = self.attention(out.permute(1, 0, 2), out.permute(1, 0, 2), out.permute(1, 0, 2))
-        out = self.dropout(out[-1, :, :])
-        out = self.fc(out)
-        return out
-
-def model_runLSTM(x_train, x_test, y_train_multilabel, y_test_multilabel, type_of_data, epochs=5, length_data_compressed=0 ):
+def model_runGeneral(x_train, x_test, y_train_multilabel, y_test_multilabel, type_of_data, epochs=5, length_data_compressed=0 ):
     # Assuming your original data shape is (number of samples, timeseries data of sample, lead of ECG)
     # Selecting the 0th lead for each sample
     x_train_selected_lead = x_train[:, :, 0]
@@ -36,32 +19,34 @@ def model_runLSTM(x_train, x_test, y_train_multilabel, y_test_multilabel, type_o
     # You can then add a third dimension to represent the single lead for each sample
     x_train_reshaped = x_train_selected_lead[:, :, np.newaxis]
     x_test_reshaped = x_test_selected_lead[:, :, np.newaxis]
+
+    # Now, create a fake RGB channel to match ResNet18's input shape
+    x_train_resnet = np.concatenate([x_train_reshaped] * 3, axis=-1)
+    x_test_resnet = np.concatenate([x_test_reshaped] * 3, axis=-1)
     start = tm.time()
-    
+    print(f"xshapes: {x_test_reshaped.shape}")
     #initializing the model resnet1d_wang, explicitly the function train_resnet1d_wang (Returns the Metric results for each Class Entry)
     #We use all classes and all samples but only one of the 12 leads for performance reasons
-    model = train_lstm(x_train_reshaped, y_train_multilabel, x_test_reshaped, y_test_multilabel, epochs=epochs, batch_size=16, num_splits=10, classes=5, type_of_data=type_of_data)
+    model = train_model(x_train_resnet, y_train_multilabel, x_test_resnet, y_test_multilabel, epochs=epochs, batch_size=32, num_splits=10, classes=5, type_of_data=type_of_data)
     end = tm.time()
     time = end - start
     print(f"Training and Evaluation time on {type_of_data}: {time}") 
-    
-def train_lstm(x_train, y_train_multilabel, x_test, y_test_multilabel, epochs=5, batch_size=32, num_splits=10, classes=5, type_of_data="data"):
+
+def train_model(x_train, y_train_multilabel, x_test, y_test_multilabel, epochs=5, batch_size=32, num_splits=10, classes=5, type_of_data="data"):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    print(f"Shapes of Data: {x_train.shape}, {x_test.shape}")
     x_train_tensor = torch.from_numpy(x_train).float().to(device)
     y_train_tensor = torch.from_numpy(y_train_multilabel).float().to(device)
 
     x_test_tensor = torch.from_numpy(x_test).float().to(device)
     y_test_tensor = torch.from_numpy(y_test_multilabel).float().to(device)
 
-    model = LSTM(input_size=1, hidden_size=16, num_layers=2, num_classes=5).to(device)
-    
+    model = torch.hub.load('pytorch/vision:v0.10.0', 'inception_v3', pretrained=True)
 
     criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-    sss = StratifiedShuffleSplit(n_splits=num_splits, test_size=0.2, random_state=42)
+    sss = StratifiedShuffleSplit(n_splits=num_splits, test_size=0.2, random_state=None)
 
     for epoch in range(epochs):
         print(f"Epoch {epoch + 1}/{epochs}")
@@ -83,6 +68,7 @@ def train_lstm(x_train, y_train_multilabel, x_test, y_test_multilabel, epochs=5,
             model.train()
             for inputs, labels in train_fold_loader:
                 optimizer.zero_grad()
+                print(inputs.shape)
                 outputs = model(inputs)
                 loss = criterion(outputs, labels)
                 loss.backward()
@@ -98,36 +84,15 @@ def train_lstm(x_train, y_train_multilabel, x_test, y_test_multilabel, epochs=5,
             avg_loss = total_loss / len(valid_fold_loader)
             print(f"  Validation Loss: {avg_loss:.4f}")
 
-
     model.eval()
     with torch.no_grad():
-        batch_size = 2  # Adjust the batch size according to your available memory
-        num_batches = len(x_test_tensor) // batch_size
-
-        all_outputs = []
-
-        for i in range(num_batches):
-            start_idx = i * batch_size
-            end_idx = (i + 1) * batch_size
-
-            x_test_batch = x_test_tensor[start_idx:end_idx]
-            y_test_batch = y_test_tensor[start_idx:end_idx]
-
-            outputs = model(x_test_batch)
-            all_outputs.append(outputs)
-
-        # Concatenate the outputs from all batches along the batch dimension
-        test_outputs = torch.cat(all_outputs, dim=0)
-
+        test_outputs = model(x_test_tensor)
         test_loss = criterion(test_outputs, y_test_tensor).item()
 
     print(f"Test Loss: {test_loss:.4f}")
 
-
     y_test_pred = torch.sigmoid(test_outputs).cpu().numpy()
     y_test_true = y_test_tensor.cpu().numpy()
-
-   
 
     threshold = 0.4
     y_test_pred_rounded = np.where(y_test_pred >= threshold, 1, 0)
@@ -157,4 +122,3 @@ def train_lstm(x_train, y_train_multilabel, x_test, y_test_multilabel, epochs=5,
     print("------------------------------------------------------------------------")
 
     return model
-
