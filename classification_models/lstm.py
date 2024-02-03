@@ -141,11 +141,8 @@ def train_lstm(x_train, y_train_multilabel, x_test, y_test_multilabel, epochs=5,
     threshold = 0.4
     y_test_pred_rounded = np.where(y_test_pred >= threshold, 1, 0)
 
-    y_test_entry = y_test_true.reshape(-1).astype(int)
-    y_test_entry = y_test_entry.tolist()
-
-    y_pred_entry = np.concatenate([arr.reshape(-1) for arr in y_test_pred_rounded])
-    y_pred_entry = y_pred_entry.tolist()
+    y_test_entry = y_test_true.flatten().tolist()
+    y_pred_entry = y_test_pred_rounded.flatten().tolist()
 
     print(f"--------Results for {type_of_data}------------------------------------")
 
@@ -165,35 +162,15 @@ def train_lstm(x_train, y_train_multilabel, x_test, y_test_multilabel, epochs=5,
     print(f"F-1 Score Each Entry: {f1_score_eachEntry:.4f}")
     print("------------------------------------------------------------------------")
 
-    print(f"1)Found 1 Entries {y_pred_entry[0:len(y_pred_entry):5].count(1)} Actual 1 Entries {y_test_entry[0:len(y_pred_entry):5].count(1)} ")
-    print(f"2)Found 1 Entries {y_pred_entry[1:len(y_pred_entry):5].count(1)} Actual 1 Entries {y_test_entry[1:len(y_pred_entry):5].count(1)} ")
-    print(f"3)Found 1 Entries {y_pred_entry[2:len(y_pred_entry):5].count(1)} Actual 1 Entries {y_test_entry[2:len(y_pred_entry):5].count(1)} ")
-    print(f"4)Found 1 Entries {y_pred_entry[3:len(y_pred_entry):5].count(1)} Actual 1 Entries {y_test_entry[3:len(y_pred_entry):5].count(1)} ")
-    print(f"5)Found 1 Entries {y_pred_entry[4:len(y_pred_entry):5].count(1)} Actual 1 Entries {y_test_entry[4:len(y_pred_entry):5].count(1)} ")
+    path_of_results = "results/"
+    file_name = path_of_results + type_of_data + "_PerformanceMetrics.txt"
 
-    print(f"1)Found 0 Entries {y_pred_entry[0:len(y_pred_entry):5].count(0)} Actual 1 Entries {y_test_entry[0:len(y_pred_entry):5].count(0)} ")
-    print(f"2)Found 0 Entries {y_pred_entry[1:len(y_pred_entry):5].count(0)} Actual 1 Entries {y_test_entry[1:len(y_pred_entry):5].count(0)} ")
-    print(f"3)Found 0 Entries {y_pred_entry[2:len(y_pred_entry):5].count(0)} Actual 1 Entries {y_test_entry[2:len(y_pred_entry):5].count(0)} ")
-    print(f"4)Found 0 Entries {y_pred_entry[3:len(y_pred_entry):5].count(0)} Actual 1 Entries {y_test_entry[3:len(y_pred_entry):5].count(0)} ")
-    print(f"5)Found 0 Entries {y_pred_entry[4:len(y_pred_entry):5].count(0)} Actual 1 Entries {y_test_entry[4:len(y_pred_entry):5].count(1)} ")
-
-    print(y_test_entry[0:100:5])
-    print(y_pred_entry[0:100:5])
-    print("-----------------")
-
-    print(y_test_entry[1:100:5])
-    print(y_pred_entry[1:100:5])
-    print("-----------------")
-
-    print(y_test_entry[2:100:5])
-    print(y_pred_entry[2:100:5])
-    print("-----------------")
-
-    print(y_test_entry[3:100:5])
-    print(y_pred_entry[3:100:5])
-    print("-----------------")
-
-    print(y_test_entry[4:100:5])
-    print(y_pred_entry[4:100:5])
+    with open(file_name, "w") as file:
+        file.write(f"{type_of_data} Performance Metrics: \n")
+        file.write(f"Accuracy: {accuracy_eachEntry}\n")
+        file.write(f"Precision:{precision_eachEntry}\n")
+        file.write(f"Recall:{recall_eachEntry}\n")
+        file.write(f"ROC AUC: {roc_auc_eachEntry}\n")
+        file.write(f"F-1 Score: {f1_score_eachEntry}\n")
     return model
 

@@ -8,7 +8,6 @@ import numpy as np
 import time as tm
 import torch.nn.functional as F
 
-from torch.optim import lr_scheduler
 
 class GRU(nn.Module):
     def __init__(self, input_size, hidden_size, num_layers, num_classes, dropout=0.5):
@@ -95,10 +94,12 @@ def model_run_GRU(x_train, x_test, y_train_multilabel, y_test_multilabel, type_o
     
     #initializing the model resnet1d_wang, explicitly the function train_resnet1d_wang (Returns the Metric results for each Class Entry)
     #We use all classes and all samples but only one of the 12 leads for performance reasons
+
     model = train_model(x_train_reshaped, y_train_multilabel, x_test_reshaped, y_test_multilabel, epochs=epochs, batch_size=16, num_splits=10, classes=5, type_of_data=type_of_data)
     end = tm.time()
     time = end - start
     print(f"Training and Evaluation time on {type_of_data}: {time}") 
+
 
 def train_model(x_train, y_train_multilabel, x_test, y_test_multilabel, epochs=5, batch_size=32, num_splits=10, classes=5, type_of_data="data"):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -245,5 +246,18 @@ def train_model(x_train, y_train_multilabel, x_test, y_test_multilabel, epochs=5
     f1_score_eachEntry = f1_score(y_test_entry, y_pred_entry)
     print(f"F-1 Score Each Entry: {f1_score_eachEntry}")
     print("------------------------------------------------------------------------")
+
+    path_of_results = "results/"
+    file_name = path_of_results + type_of_data + "_PerformanceMetrics.txt"
+
+    with open(file_name, "w") as file:
+        file.write(f"{type_of_data} Performance Metrics: \n")
+        file.write(f"Accuracy: {accuracy_eachEntry}\n")
+        file.write(f"Precision:{precision_eachEntry}\n")
+        file.write(f"Recall:{recall_eachEntry}\n")
+        file.write(f"ROC AUC: {roc_auc_eachEntry}\n")
+        file.write(f"F-1 Score: {f1_score_eachEntry}\n")
+    
+
 
     return model

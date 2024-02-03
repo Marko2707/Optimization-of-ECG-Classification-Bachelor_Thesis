@@ -1,0 +1,6 @@
+PanTompkins++ Compressed Data on ResNet Performance Metrics: 
+Accuracy: 0.8090991810737034
+Precision:0.6275735294117647
+Recall:0.6113896848137536
+ROC AUC: 0.743911480611317
+F-1 Score: 0.6193759071117562

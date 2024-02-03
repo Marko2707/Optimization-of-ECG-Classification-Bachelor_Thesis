@@ -1,3 +1,5 @@
+"""Following module includes the necessary functions to test the resned1d_wang model inside the main.py"""
+
 import numpy as np
 import pandas as pd
 import time as tm
@@ -147,9 +149,10 @@ def train_resnet1d_wang(x_train, y_train_multilabel, x_test, y_test_multilabel, 
     #Gives a Prediction as Float as to how likely the prediction data is true
     y_test_pred = torch.sigmoid(test_outputs).cpu().numpy()
     y_test_true = y_test_tensor.cpu().numpy()
-    print(f"Shapes of data {y_test_pred.shape} and {y_test_true.shape}")
+  
+
     #threshold value on which the prediction percentage is supposed to be done into True Value
-    threshold = 0.4 #TODO Move to the Start, 0.4 resulted in the best results
+    threshold = 0.4
     
     print(f"Threshold is set at --{threshold}--")
     #Rounding the values of the prediction into 1 and 0 based on the threshold above
@@ -163,14 +166,13 @@ def train_resnet1d_wang(x_train, y_train_multilabel, x_test, y_test_multilabel, 
 
     print(f"--------Results for {type_of_data}------------------------------------")
 
-    print("Metrics tested for each Instance of all classes:")
-
+    print("Metrics were tested for each Instance of all classes:")
     accuracy_eachEntry = accuracy_score(y_test_entry, y_pred_entry)
     precision_eachEntry = precision_score(y_test_entry, y_pred_entry)
     recall_eachEntry = recall_score(y_test_entry, y_pred_entry)
-    print(f"Accuracy Each Entry {accuracy_eachEntry}")
-    print(f"Precision Each Entry {precision_eachEntry}")
-    print(f"Recall Each Entry {recall_eachEntry}")
+    print(f"Accuracy: {accuracy_eachEntry}")
+    print(f"Precision:{precision_eachEntry}")
+    print(f"Recall:{recall_eachEntry}")
 
     roc_auc_eachEntry = roc_auc_score(y_test_entry, y_pred_entry)
     print(f"ROC AUC: {roc_auc_eachEntry}")
@@ -178,30 +180,18 @@ def train_resnet1d_wang(x_train, y_train_multilabel, x_test, y_test_multilabel, 
     # Annahme: y_test_entry und y_pred_entry sind Numpy-Arrays oder Listen
     f1_score_eachEntry = f1_score(y_test_entry, y_pred_entry)
 
-    print(f"F-1 Score Each Entry: {f1_score_eachEntry}")
+    print(f"F-1 Score: {f1_score_eachEntry}")
     print("------------------------------------------------------------------------")
 
-    conf_matrix_eachEntry = confusion_matrix(y_test_entry, y_pred_entry)
-    print(conf_matrix_eachEntry)
+    path_of_results = "results/"
+    file_name = path_of_results + type_of_data + "_PerformanceMetrics.txt"
 
-    print(y_test_entry[0:100:5])
-    print(y_pred_entry[0:100:5])
-    print("-----------------")
+    with open(file_name, "w") as file:
+        file.write(f"{type_of_data} Performance Metrics: \n")
+        file.write(f"Accuracy: {accuracy_eachEntry}\n")
+        file.write(f"Precision:{precision_eachEntry}\n")
+        file.write(f"Recall:{recall_eachEntry}\n")
+        file.write(f"ROC AUC: {roc_auc_eachEntry}\n")
+        file.write(f"F-1 Score: {f1_score_eachEntry}\n")
 
-    print(y_test_entry[1:100:5])
-    print(y_pred_entry[1:100:5])
-    print("-----------------")
-
-
-    print(y_test_entry[2:100:5])
-    print(y_pred_entry[2:100:5])
-    print("-----------------")
-
-    print(y_test_entry[3:100:5])
-    print(y_pred_entry[3:100:5])
-    print("-----------------")
-
-    print(y_test_entry[4:100:5])
-    print(y_pred_entry[4:100:5])
-    
     return model

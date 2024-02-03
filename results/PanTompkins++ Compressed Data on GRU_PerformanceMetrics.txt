@@ -1,0 +1,6 @@
+PanTompkins++ Compressed Data on GRU Performance Metrics: 
+Accuracy: 0.8049135577797998
+Precision:0.6245196003074558
+Recall:0.5820200573065902
+ROC AUC: 0.7314223243351686
+F-1 Score: 0.6025213199851687

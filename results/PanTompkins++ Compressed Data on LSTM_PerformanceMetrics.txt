@@ -1,0 +1,6 @@
+PanTompkins++ Compressed Data on LSTM Performance Metrics: 
+Accuracy: 0.8068243858052775
+Precision:0.6256102140443109
+Recall:0.5967048710601719
+ROC AUC: 0.7375449215022742
+F-1 Score: 0.6108157653528873
