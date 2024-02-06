@@ -1,25 +1,33 @@
 import numpy as np
 
 def adaptive_fixed_RPeakFinder(ecg_data):
-    # List of Peaks as the actual data
+    #List of Peaks as the actual data
     peaks = []
     #List of the according indices
     peaks_index = []
     # count for the indices, since the same data amplitude could be on multiple indices
     count = 0
+
+    #finding the maximum of our data for the fixed condition threshold
     maximum = max(abs(min(ecg_data)), max(ecg_data))
-    # Set threshold to be set the entire time
+    # Set threshold percentile to be set the entire time
     fixed_threshold = 0.7
-    # Set threshold for peaks to be added adaptively
+
+    # Set threshold for peaks to be added adaptively 
     adaptive_threshold = 0.8
+
     # Set threshold for peaks to be removed
     removal_threshold = 0.75
-    #Adding the first data
+
+    #Adding the first data for the adaptive threshold to be able to work
     peaks.append(abs(ecg_data[0]))
     peaks_index.append(count)
+
+    #going through all measurements of the ecg sample
     for i in ecg_data[1:]:
         count +=1
         #Adding the maximum data, also abs values, since the lowest negative values can be the R-Peaks
+        #If both conditions are met, add as potential R-peak
         if abs(i) >= adaptive_threshold * (sum(peaks)/len(peaks)) and abs(i) >= maximum * fixed_threshold :
             peaks.append(abs(i))
             peaks_index.append(count)
@@ -35,9 +43,7 @@ def adaptive_fixed_RPeakFinder(ecg_data):
     
 
     #Eliminating multiple indices which point to the same peaks and are adjacent to eachother
-    #i = 0
-    #Going from right to left
-    
+    #Going from right to left 
     i = len(peaks_index)
     while i > 0: #len(peaks_index):
         try:
@@ -47,15 +53,18 @@ def adaptive_fixed_RPeakFinder(ecg_data):
                 count = 0
             else:
                 peaks_index.remove(element)
-                # After deleting elements, you have to set the i one back, as it would go out of range
-                #i -= 1
+                # After deleting elements, you have to set the i one back, as it would go out of range (right to left, thus +1)
                 i += 1
         except IndexError:
             pass
-        i -= 1
+        i -= 1 #going one measurement further (right to left, thus -1)
     
     return peaks_index
 
+"""
+This function utilizes my own peak detection method to optimize the data and compress it accordingly as summarized in Chapter 6.2 of my bachelor thesis.
+The idea is it to extract all QRS complexes and rearrange them into a smaller frame and use this newly generated data for machine learning. 
+"""
 def preprocess_adaptiveThresholdMethod(ecg_data, window_size, data_length= 500):
     # creates the same data filled with only zeros
     modified_ecg_data = np.zeros_like(ecg_data)

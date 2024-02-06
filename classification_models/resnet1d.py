@@ -1,6 +1,6 @@
 """
 Following Code and models were taken from following GitHub Repository: https://github.com/helme/ecg_ptbxl_benchmarking
-I, Marko Stankovic use the ResNet1d_wang model in the context of my bachelor thesis as of the 29th. 12.2023
+I, Marko Stankovic use the ResNet1d_wang model in the context of my bachelor thesis as of the 29th. 12.2023 and reference the original authors in said bachelor thesis.
 """
 
 import torch

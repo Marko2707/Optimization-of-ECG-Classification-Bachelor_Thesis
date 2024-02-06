@@ -1,4 +1,4 @@
-"""Following module includes the necessary functions to test the resned1d_wang model inside the main.py"""
+"""Following module includes the necessary functions to test the resned1d_wang model inside the main.py. The resnet model can be found in the resnet1d.py"""
 
 import numpy as np
 import pandas as pd
@@ -17,25 +17,25 @@ from sklearn.metrics import accuracy_score
 import torch
 from torch.utils.data import TensorDataset
 from sklearn.model_selection import StratifiedShuffleSplit
-from sklearn.metrics import confusion_matrix
 
 from classification_models.resnet1d import resnet1d_wang
 
 
-
+"""Function to run the training and evaluation of the resnet model"""
 def model_run_resnet(x_train, x_test, y_train_multilabel, y_test_multilabel, type_of_data, epochs=1, length_data_compressed=0 ):
-    #Sorting the Data, so that it fits the expected way of the models
+    #Sorting the Data, so that it fits the expected way of the model
     x_train = np.transpose(x_train, (0, 2, 1))
     x_test = np.transpose(x_test, (0, 2, 1))
 
-    # Assuming x_train and x_test have shapes (19601, 12, 1000) and (2198, 12, 1000), respectively
+    #Shaping the data if its raw or if its optimized to work with the model
     x_train_reshaped = x_train[:, 0, :].reshape(-1, 1, (1000 - length_data_compressed))
     x_test_reshaped = x_test[:, 0, :].reshape(-1, 1, (1000 - length_data_compressed))
 
+    #Return of the Shapes for both data and lagbels
     print(f"Shapes x: {x_train.shape} und {x_test.shape}")
     print(f"Shapes y: {y_train_multilabel.shape} and {y_test_multilabel.shape} ")
 
-    #starting the countdown, to see how long the raw data model takes
+    #starting the countdown, to see how long the model takes
     start = tm.time()
     #initializing the model resnet1d_wang, explicitly the function train_resnet1d_wang (Returns the Metric results for each Class Entry)
     #We use all classes and all samples but only one of the 12 leads for performance reasons
@@ -69,6 +69,7 @@ def train_resnet1d_wang(x_train, y_train_multilabel, x_test, y_test_multilabel, 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     #Converting the data to Pytorch Tensors datastruchtures to allow for learning
+    #Not used due to StratifiedShuffleSplit
     x_train_tensor = torch.from_numpy(x_train).float().to(device)
     y_train_tensor = torch.from_numpy(y_train_multilabel).float().to(device)
     
@@ -86,7 +87,7 @@ def train_resnet1d_wang(x_train, y_train_multilabel, x_test, y_test_multilabel, 
 
     #Defining the Loss Function and the optimizer
     criterion = nn.BCEWithLogitsLoss() #Binary Cross Entropy Loss (Either True or False)
-    optimizer = optim.Adam(model.parameters(), lr=0.001) #adjusts the models parameters based on the loss function
+    optimizer = optim.AdamW(model.parameters(), lr=0.001) #adjusts the models parameters based on the loss function
 
     #Splits the data for TRAINING into Train/Test Split
     #NumSplits is 10 in accordance to PTB-XL --> Split into 10 different train and validation sets
@@ -111,7 +112,7 @@ def train_resnet1d_wang(x_train, y_train_multilabel, x_test, y_test_multilabel, 
 
             # Creation of PyTorch datasets and dataloaders for training
             train_fold_dataset = TensorDataset(x_train_fold_tensor, y_train_fold_tensor)
-            train_fold_loader = DataLoader(train_fold_dataset, batch_size=batch_size, shuffle=True)  #Shuffle the training data
+            train_fold_loader = DataLoader(train_fold_dataset, batch_size=batch_size, shuffle=True)  #Shuffle the training data, so that the model doesnt learn the sequence
 
             # Creation of PyTorch datasets and dataloaders for validation
             valid_fold_dataset = TensorDataset(x_valid_fold_tensor, y_valid_fold_tensor)
@@ -145,25 +146,23 @@ def train_resnet1d_wang(x_train, y_train_multilabel, x_test, y_test_multilabel, 
         test_loss = criterion(test_outputs, y_test_tensor).item()
 
     print(f"Test Set Loss: {test_loss:.4f}")
+
     #Preparing the Data for the Evaluatiin 
     #Gives a Prediction as Float as to how likely the prediction data is true
     y_test_pred = torch.sigmoid(test_outputs).cpu().numpy()
     y_test_true = y_test_tensor.cpu().numpy()
   
-
     #threshold value on which the prediction percentage is supposed to be done into True Value
     threshold = 0.4
-    
     print(f"Threshold is set at --{threshold}--")
     #Rounding the values of the prediction into 1 and 0 based on the threshold above
     y_test_pred_rounded = np.where(y_test_pred >= threshold, 1, 0)
    
-
     y_test_entry = y_test_true.flatten().tolist()
     y_pred_entry = y_test_pred_rounded.flatten().tolist()
 
 
-
+    #Returning the results
     print(f"--------Results for {type_of_data}------------------------------------")
 
     print("Metrics were tested for each Instance of all classes:")
@@ -183,6 +182,7 @@ def train_resnet1d_wang(x_train, y_train_multilabel, x_test, y_test_multilabel, 
     print(f"F-1 Score: {f1_score_eachEntry}")
     print("------------------------------------------------------------------------")
 
+    #writing the results into the .txt in the results folder
     path_of_results = "results/"
     file_name = path_of_results + type_of_data + "_PerformanceMetrics.txt"
 

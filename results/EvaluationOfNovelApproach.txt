@@ -1,0 +1,12 @@
+For further understanding of these results, please view Chapter 5.4 of my bachelor thesis
+
+My methods found R-peaks compared to those found by PanTompkins++
+Hits: 107476 || Misses: 5594
+Overlap of 0.9505262226939064
+-----------------------------------------------------------------
+The PanTompkins++ methods R-peaks compared to those found by my method
+Hits: 107476 || Misses: 17552
+Overlap of 0.8596154461400646
+-----------------------------------------------------------------
+Found R-peaks by my novel method: 111760
+Found R-peaks by the Pan-Tompkins++ method: 125028

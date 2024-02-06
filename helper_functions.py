@@ -12,6 +12,7 @@ from peak_detection_algos.pan_tompkins_plus_plus import Pan_Tompkins_Plus_Plus
 
 """
 
+"""Checks if folder is empty"""
 def is_folder_empty(folder):
     #Takes in content of given folder
     content = os.listdir(folder)
@@ -21,6 +22,7 @@ def is_folder_empty(folder):
 
 import os
 
+"""Checks if folders exist, used for NumpyArrays and PandaSeries folders"""
 def create_folder_if_not_exists(folder_name):
     if not os.path.exists(folder_name):
         #if folder does not exist, creates it
@@ -30,33 +32,30 @@ def create_folder_if_not_exists(folder_name):
         #already created
         print(f"Folder '{folder_name}' already exists.")
 
-
+"""Plots all the 5 classes used in the bachelor thesis."""
 def plot_all_classes(extracted_classes, extracted_ecg_ids, target_classes, x_train, y_train, number_no_superclass):
-     # Iterate over y_train until each target class is extracted at least once
+     #Iterate over y_train until each target class is extracted at least once
         for ecg_id, ecg_classes in y_train.items():
-            # Check if the ecg_id has already been processed
-            #if ecg_id in extracted_ecg_ids:
-            #    continue
 
-            # Check if the list of classes is not empty
+            #Check if the list of classes is not empty
             if ecg_classes:
                 # Extract the first class
                 ecg_class = ecg_classes[0]
 
-                # Check if the class is in the target classes, has not been extracted yet,
-                # and there are no other classes present with len(ecg_classes) == 1
+                #Check if the class is in the target classes, has not been extracted yet,
+                #and there are no other classes present with len(ecg_classes) == 1
                 if ecg_class in target_classes and ecg_class not in extracted_classes and len(ecg_classes) == 1:
-                    # Perform your desired actions with ecg_id and ecg_class
+                    #Perform your desired actions with ecg_id and ecg_class
                     print(f"ecg_id: {ecg_id}, Klasse: {ecg_class}")
 
-                    # Add the extracted class and the according ecg_id to the lists
+                    #Add the extracted class and the according ecg_id to the lists
                     extracted_classes.append(ecg_class)
                     extracted_ecg_ids.append(ecg_id)
 
-                    # Remove the extracted class from target_classes to avoid repeated extraction
+                    #Remove the extracted class from target_classes to avoid repeated extraction
                     target_classes.remove(ecg_class)
 
-                # Check if all target classes have been extracted
+                #heck if all target classes have been extracted
                 if not target_classes:
                     break
             else:
@@ -65,7 +64,6 @@ def plot_all_classes(extracted_classes, extracted_ecg_ids, target_classes, x_tra
 
 
         #Get all information of y_train of one inext
-        #print(Y.loc[y_train.index[0]])
 
         #!To plot the different Classes remove the block comment
         #Plotting all 5 ECG Samples of each Super-Class:
@@ -101,33 +99,28 @@ def plot_all_classes(extracted_classes, extracted_ecg_ids, target_classes, x_tra
                 plt.legend()
                 plt.show()
 
+"""Plots the PanTompkinsPlusPlus found R-peaks and the compression process aswell"""
 def plot_panTompkinsPlusPlus(x_train):
-    # Erster Umgang mit PanTompkinsPlusPlus
 
-    # Extrahieren Sie das erste EKG-Signal (1. Leitung) "NORM"
     first_ekg_signal = x_train[0, :, 0]
 
-    # CD Klasse
-    # first_ekg_signal = x_train[31,:,0]
 
-    # Setting the frequency to 100Hz for the PanTompkinsPlusPlus
+    #Setting the frequency to 100Hz for the PanTompkinsPlusPlus
     freq = 100
 
-    # Initialisieren Sie eine Instanz des Pan_Tompkins_Plus_Plus-Algorithmus
-    pan_tompkins = Pan_Tompkins_Plus_Plus()
+    pan_tompkins = Pan_Tompkins_Plus_Plus()#init of PanTomp
 
-    # Wenden Sie den Algorithmus auf das erste EKG-Signal an
+    #using panTomp
     r_peaks_indices = pan_tompkins.rpeak_detection(first_ekg_signal, freq)
 
-    # Zeitachse für das Plot
+    #time axis for the plots
     time_axis = np.arange(0, 10, 10 / len(first_ekg_signal))
 
     r_peaks = r_peaks_indices.astype(int)
 
-    # Ausgabe der detektierten R-Peaks-Indizes
     print("Detected R-peaks indices:", r_peaks_indices)
 
-    # Plot des EKG-Signals
+    #plot of signal
     plt.figure(figsize=(12, 6))
     plt.plot(time_axis, first_ekg_signal, label="NORM Class R-Peak Detection through Pan-Tompkins++")
     plt.plot(r_peaks / freq, first_ekg_signal[r_peaks], "x", color="red")
@@ -137,23 +130,25 @@ def plot_panTompkinsPlusPlus(x_train):
     plt.legend()
     plt.show()
 
-    # Convert R-peaks indices to integers
+
+    #------Conversion of R-peaks to the QRS complexes and further to be compressed
+
+
+    #Convert R-peaks indices to integers
     r_peaks_indices = r_peaks_indices.astype(int)
 
-    # Create a mask to set values to 0 except within a 100ms window around each R-peak
+    #Create a mask to set values to 0 except within a 100ms window around each R-peak
     mask = np.zeros_like(first_ekg_signal)
     window_size = int(0.1 * freq)  # 100 ms window size
 
     for r_peak in r_peaks_indices:
         r_peak = int(r_peak)  # Convert to integer
         mask[max(0, r_peak - window_size):min(len(mask), r_peak + window_size + 1)] = 1
-    # Apply the mask to the original signal
+    #Apply the mask to the original signal
     modified_signal = first_ekg_signal * mask
 
-    # Ausgabe der detektierten R-Peaks-Indizes
     print("Detected R-peaks indices:", r_peaks_indices)
 
-    # Plot des EKG-Signals mit modifizierten Werten
     plt.figure(figsize=(12, 6))
     plt.plot(time_axis, first_ekg_signal, label="Original ECG Signal")
     plt.plot(time_axis, modified_signal, label="QRS-Complexes", linestyle="--", color="red")

@@ -5,7 +5,9 @@ Created on Wed Jul 27 13:37:40 2022
 @author: Niaz
 
 Found in the following Repository https://github.com/Niaz-Imtiaz/Pan-Tompkins-Plus-Plus
+I, Marko Stankovic use the PanTompkins++ implementation in the context of my bachelor thesis as of the 8th.1.2024 and reference the original authors in said bachelor thesis.
 """
+
 import numpy as np
 from scipy.interpolate import interp1d
 import peakutils

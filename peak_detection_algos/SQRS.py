@@ -6,44 +6,15 @@ Authors of the Paper: Lu Wu, Xiaoyun Xie and Yinglong Wang
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.signal import hilbert, hann, find_peaks
+from scipy.signal import  find_peaks
 from scipy.stats import kurtosis
-from pywt import dwt
 import math
 
-"""Runs a simple test for ecg data using the SQRS algorithm"""
-"""FOR FOLLOWING CODE TO RUN, YOU MUST RUN THE MAIN.PY,SINCE THE DATA MUST BE INITIALIZED"""
-def main():
-    #Defining the Folder where the NumpArr and PandSeries are saved
-    numpy_path = "NumpyArrays/"
-    series_path = "PandaSeries/"
-    #Defining the name of the files, to save the data
-    x_train_unprocessed = numpy_path + "x_train_unprocessed.npy"
-    x_test_unprocessed = numpy_path + "x_test_unprocessed.npy"
-    y_train_path = series_path + "y_train.pkl"  
-    y_test_path = series_path + "y_test.pkl"
-    
-    x_train = np.load(x_train_unprocessed)
-    x_test = np.load(x_test_unprocessed)
-    # Load Series from pickle
-    y_train= pd.read_pickle(y_train_path)
-    y_test = pd.read_pickle(y_test_path)
 
-    # Original data
-    #NORM
-    original_data = x_train
-    #MI
-    #original_data = x_train[8, :, 0]
-    #STTC
-    #original_data = x_train[22, :, 0]
-    #CD
-    #original_data = x_train[32, :, 0]
-    #HYP
-    #original_data = x_train[30, :, 0]
-
-    SQRS_execution(ecg_data=original_data)
-
-
+"""
+This function utilizes the SQRS method to optimize the data and compress it accordingly as summarized in Chapter 6.2 of my bachelor thesis.
+The idea is it to extract all QRS complexes and rearrange them into a smaller frame and use this newly generated data for machine learning. 
+"""
 def SQRS_PreperationWithCompression(ecg_data, window_size, data_length=500):
     # creates the same data filled with only zeros
     modified_ecg_data = np.zeros_like(ecg_data)
@@ -82,11 +53,13 @@ def SQRS_PreperationWithCompression(ecg_data, window_size, data_length=500):
     print(modified_ecg_data.shape)
     return modified_ecg_data
 
-
+"""
+Following module executes the peak detection method of the SQRS
+It is written by me, Marko Stankovic and inspired by the original work of https://www.mdpi.com/2227-9032/9/2/227.
+It takes one sample of 1-lead ECG data and returns R-peaks as indices of a list. It is used in the function "SQRS_PreperationWithCompression" to optimize the data.
+"""
 def SQRS_execution(ecg_data):
-    
-    #Tester for different ECG Data
-    #first_lead = ecg_data[22, :, 0]
+
     first_lead = ecg_data
 
     #Original work had one of 5, but 3 yielded better results though does not smooth the signal as much 
@@ -121,7 +94,7 @@ def SQRS_execution(ecg_data):
 
     #RR_recent and RR_all gets calculated in the code
 
-    #As per their suggestion for 200 and 360ms
+    #As per their suggestion for 200 and 360ms (10ms is one measurement with 100Hz data)
     RR_recent = 20
     RR_all = 36
 
@@ -134,6 +107,7 @@ def SQRS_execution(ecg_data):
 
     #print(f"Final Peaks: {R_peaks}")
     
+    #The final outputs were used for plotting for the bachelor thesis, this section was not removed due to it possibly being used still.
     """
     #Plotting the signal 
     plt.figure(figsize=(12, 6))
@@ -349,5 +323,36 @@ def generate_R_peaks_with_decision_rules(SWVT_transform, R_peaks_candidates, RR_
 
 
 
-#Runs the test
-#main()
+"""This code was used for testing on the PTB-XL data and is not utilized anymore as the functions were adjusted for the main.py
+    It was not removed under the precaution, that some test might still be conducted later on.
+"""
+def main():
+    #Defining the Folder where the NumpArr and PandSeries are saved
+    numpy_path = "NumpyArrays/"
+    series_path = "PandaSeries/"
+    #Defining the name of the files, to save the data
+    x_train_unprocessed = numpy_path + "x_train_unprocessed.npy"
+    x_test_unprocessed = numpy_path + "x_test_unprocessed.npy"
+    y_train_path = series_path + "y_train.pkl"  
+    y_test_path = series_path + "y_test.pkl"
+    
+    x_train = np.load(x_train_unprocessed)
+    x_test = np.load(x_test_unprocessed)
+    # Load Series from pickle
+    y_train= pd.read_pickle(y_train_path)
+    y_test = pd.read_pickle(y_test_path)
+
+    # Original data
+    #NORM
+    original_data = x_train
+    #MI
+    #original_data = x_train[8, :, 0]
+    #STTC
+    #original_data = x_train[22, :, 0]
+    #CD
+    #original_data = x_train[32, :, 0]
+    #HYP
+    #original_data = x_train[30, :, 0]
+
+    SQRS_execution(ecg_data=original_data)
+

@@ -54,6 +54,7 @@ def testOfOwnMethod(test_size):
         own_r_peaks_indices_list.append(r_peaks_indices)
     
     
+    
     #Initializing the amount of hits and misses
     hits = 0
     miss = 0
@@ -70,7 +71,7 @@ def testOfOwnMethod(test_size):
                 if j + x in pan_r_peaks_indices_list[i]:
                     hits += 1
                     hitfound = True
-                if j - x in pan_r_peaks_indices_list[i]:
+                elif j - x in pan_r_peaks_indices_list[i]:
                     hits += 1
                     hitfound = True
             #If the found R-peak is not also in the PanTompkins Data we get a miss
@@ -79,8 +80,13 @@ def testOfOwnMethod(test_size):
             hitfound = False #gets returned to False after each tested peak
 
     print(f"Hits: {hits} || Misses: {miss}")
-    print(f"Overlap of {hits /(hits + miss) }%\n")
+    print(f"Overlap of {hits /(hits + miss) }\n")
 
+    hits1 = hits
+    miss1 = miss
+    
+    hits = 0
+    miss = 0
     print("Testing if R-Peaks found by the PanTompkins++ method are also found by my own method.")
     for i in range(len(pan_r_peaks_indices_list)):
         for j in pan_r_peaks_indices_list[i]:
@@ -91,7 +97,7 @@ def testOfOwnMethod(test_size):
                 if j + x in own_r_peaks_indices_list[i]:
                     hits += 1
                     hitfound = True
-                if j - x in own_r_peaks_indices_list[i]:
+                elif j - x in own_r_peaks_indices_list[i]:
                     hits += 1
                     hitfound = True
             #If the found R-peak is not also in the PanTompkins Data we get a miss
@@ -99,7 +105,10 @@ def testOfOwnMethod(test_size):
                 miss +=1
             hitfound = False #gets returned to False after each peak
     print(f"Hits: {hits} || Misses: {miss}")
-    print(f"Overlap of {hits /(hits + miss) }%")
+    print(f"Overlap of {hits /(hits + miss) }\n")
+
+    hits2 = hits
+    miss2 = miss
 
     count = 0
     R = 0
@@ -112,6 +121,22 @@ def testOfOwnMethod(test_size):
 
     print("Found R-peaks by my novel method: ", count)
     print("Found R-peaks by the Pan-Tompkins++ method:", R)
+
+    path_of_results = "results/"
+    file_name = path_of_results + "EvaluationOfNovelApproach.txt"
+
+    with open(file_name, "w") as file:
+        file.write("For further understanding of these results, please view Chapter 5.4 of my bachelor thesis\n\n")
+        file.write(f"My methods found R-peaks compared to those found by PanTompkins++\n")
+        file.write(f"Hits: {hits1} || Misses: {miss1}\n")
+        file.write(f"Overlap of {hits1 /(hits1 + miss1) }\n")
+        file.write(f"-----------------------------------------------------------------\n")
+        file.write("The PanTompkins++ methods R-peaks compared to those found by my method\n")
+        file.write(f"Hits: {hits2} || Misses: {miss2}\n")
+        file.write(f"Overlap of {hits2 /(hits2 + miss2) }\n")
+        file.write(f"-----------------------------------------------------------------\n")
+        file.write(f"Found R-peaks by my novel method: {count}\n")
+        file.write(f"Found R-peaks by the Pan-Tompkins++ method: {R}")
 
 
 if __name__ == "__main__":

@@ -1,3 +1,7 @@
+"""
+Following Code was taken from following GitHub Repository: https://github.com/helme/ecg_ptbxl_benchmarking
+I, Marko Stankovic use the ResNet1d_wang model in the context of my bachelor thesis as of the 29.12.2023
+"""
 class ClassificationModel(object):
 
     def __init__(self):
