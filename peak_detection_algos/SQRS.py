@@ -1,7 +1,7 @@
 """
 Following code was written with the help of the paper https://www.mdpi.com/2227-9032/9/2/227 to try and implement their method for SQRS
 Authors of the Paper: Lu Wu, Xiaoyun Xie and Yinglong Wang
-
+Implementation author: Marko Stankovic
 """
 import numpy as np
 import pandas as pd
@@ -26,7 +26,7 @@ def SQRS_PreperationWithCompression(ecg_data, window_size, data_length=500):
         if i % 500 == 0:
             print(i)
         # applying the peak detection algorithm on each sampole
-        freq = 100
+        #freq = 100
         
         r_peaks_indices = SQRS_execution(first_lead)
 

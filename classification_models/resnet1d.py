@@ -177,23 +177,7 @@ def resnet1d152(**kwargs):
     """
     return ResNet1d(Bottleneck1d, [3, 8, 36, 3], **kwargs)
 
-"""
-#original used kernel_size_stem = 8
-def resnet1d_wang(**kwargs):
-    
-    if(not("kernel_size" in kwargs.keys())):
-        kwargs["kernel_size"]=[5,3]
-    if(not("kernel_size_stem" in kwargs.keys())):
-        kwargs["kernel_size_stem"]=7
-    if(not("stride_stem" in kwargs.keys())):
-        kwargs["stride_stem"]=1
-    if(not("pooling_stem" in kwargs.keys())):
-        kwargs["pooling_stem"]=False
-    if(not("inplanes" in kwargs.keys())):
-        kwargs["inplanes"]=128#
-    return ResNet1d(BasicBlock1d, [1, 1, 1], **kwargs)
 
-"""
 def resnet1d_wang(input_channels=1, num_classes=5, **kwargs):
     if "kernel_size" not in kwargs.keys():
         kwargs["kernel_size"] = [5, 3]

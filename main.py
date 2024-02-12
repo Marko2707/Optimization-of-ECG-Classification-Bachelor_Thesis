@@ -35,14 +35,11 @@ import time as tm
 #Machine Learning Stuff
 from sklearn.preprocessing import MultiLabelBinarizer
 
-
 #imports of modules in this project to help execution
 from helper_functions import is_folder_empty, create_folder_if_not_exists, plot_all_classes, plot_panTompkinsPlusPlus
 
-
 #Import of PeakDetection Algorithms
 #PanTompkins++
-from peak_detection_algos.pan_tompkins_plus_plus import Pan_Tompkins_Plus_Plus
 from peak_detection_algos.exec_pan_tompkins_plus_plus import preprocess_pantompkinsPlusPlusCompression
 #My own adaptive Method
 from peak_detection_algos.OwnMethod import preprocess_adaptiveThresholdMethod
@@ -60,7 +57,7 @@ from classification_models.gru import model_run_GRU
 #---Global Parameters----------------------------------------
 #add the folder where your ptb-xl data is (It can be found under: https://physionet.org/content/ptb-xl/1.0.3/ )
 #the path structure under windows should then be like following template:  "C:/Users/marko/Desktop/ptb-xl" as string, the PTB-XL dataset should be inside the folder
-pathname = "C:/Users/marko/Desktop/ptb-xl" #Make sure not to have a "/" at the end
+pathname = "C:/Users/marko/Desktop/ptb-xl/" #Make sure add a "/" at the end
 
 #decision if certain plots of the bachelor thesis should be run
 plot_choice = "no" # "yes" or "no"
@@ -125,10 +122,12 @@ def main():
         npy_load_time_start = tm.time()
         x_train = np.load(x_train_unprocessed)
         x_test = np.load(x_test_unprocessed)
+
         # Load Series from pickle
         y_train= pd.read_pickle(y_train_path)
         y_test = pd.read_pickle(y_test_path)
         npy_load_time_end = tm.time()
+
         #Return the time it takes to take the pre saved data 
         print(f"Data load time from the saved Folders: {npy_load_time_end - npy_load_time_start}")
     #----Data Initiation process ending -------------------------------------------------------------------------------------------------------------
@@ -154,7 +153,6 @@ def main():
         
     #-----End of Plotting----------------------------------------------------------------------------------------------
     
-
     #Found Samples for different Classes 
     #NORM
     #original_data = x_train[0, :, 0]
@@ -167,10 +165,9 @@ def main():
     #HYP
     #original_data = x_train[30, :, 0]
 
-
     #----DATA PREPROCESSING---------------------------------------------------------------------------------------------------
-    freq = 100
-    #the recording is 10 seconds --> 10 000 ms and a average qrs complex is 100ms - 120ms
+    freq = 100 #frequency of the PTB-XL is 100Hz | if youd use the 500Hz data this would have to change
+    #the recording is 10 seconds --> 10 000 ms and a average qrs complex is 70-100ms
     window_size = int(0.1 * freq)  # 100 ms window size --> 10 measurement window
     #The window size is used both before and after the found R-peaks to extract a 200ms window that contains the QRS-complex in its entirety
    
@@ -246,9 +243,10 @@ def main():
  
 """
 This Function implements the general way the data is loaded from the PTB-XL dataset.
-It utilizes most functions given directly by the authors of the PTB-XL dataset and their python file: https://physionet.org/content/ptb-xl/1.0.3/ 
+@author Nils Strodthof et. al and Me
+It utilizes the original function given directly by the authors of the PTB-XL dataset and their python file: https://physionet.org/content/ptb-xl/1.0.3/ 
 
-It takes in the pathname under windows as input and returns the train and test data.
+It takes in the pathname under windows as input and returns the train and test data and their labels: x_train, x_test and y_train and y_test
 """
 def dataCreation(pathname):
 
@@ -260,13 +258,13 @@ def dataCreation(pathname):
         data = np.array([signal for signal, meta in data])
         return data
 
-    path =  "C:/Users/marko/Desktop/bachelor_arbeit/code/"
+    path = pathname #declaring the path file
     sampling_rate=100
-    # load and convert annotation data
+    #load and convert annotation data
     Y = pd.read_csv(path+"ptbxl_database.csv", index_col="ecg_id")
     Y.scp_codes = Y.scp_codes.apply(lambda x: ast.literal_eval(x))
 
-    # Load raw signal data
+    #Load raw signal data
     X = load_raw_data(Y, sampling_rate, path)
 
     # Load scp_statements.csv for diagnostic aggregation
@@ -280,10 +278,10 @@ def dataCreation(pathname):
                 tmp.append(agg_df.loc[key].diagnostic_class)
         return list(set(tmp))
 
-    # Apply diagnostic superclass
+    #Apply diagnostic superclass
     Y["diagnostic_superclass"] = Y.scp_codes.apply(aggregate_diagnostic)
 
-    # Split data into train and test
+    #split data into train and test
     test_fold = 10
 
     # Training data creation
@@ -295,6 +293,6 @@ def dataCreation(pathname):
 
     return (X_train, y_train, X_test, y_test, Y)
 
-
+#Runs the main if its the file run
 if __name__ == "__main__":
     main()
