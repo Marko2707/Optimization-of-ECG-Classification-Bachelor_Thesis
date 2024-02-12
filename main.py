@@ -61,8 +61,8 @@ from classification_models.gru import model_run_GRU
 
 #---Starting Parameters----------------------------------------
 #add the folder where your ptb-xl data is (It can be found under: https://physionet.org/content/ptb-xl/1.0.3/ )
-#the path structure under windows should then be like following template: "C:/Users/user/Desktop/bachelor_arbeit/code/PTB-XL", the PTB-XL dataset should be inside the path
-pathname = "C:/Users/marko/Desktop/ptb-xl" #Make sure not to add the final "/"
+#the path structure under windows should then be like following template:  "C:/Users/marko/Desktop/ptb-xl" as string, the PTB-XL dataset should be inside the folder
+pathname = "C:/Users/marko/Desktop/ptb-xl" #Make sure not to have a "/" at the end
 
 #decision if certain plots of the bachelor thesis should be run
 plot_choice = "no" # "yes" or "no"
