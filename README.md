@@ -17,7 +17,7 @@ Before executing the code, ensure that you have the following dependencies insta
 - sklearn
 - peakutils
 - scipy
-- fastai v1
+- fastai v1.0.61
 
 To install fastai v1, use the following command:
 pip install fastai==1.0.61
