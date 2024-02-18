@@ -78,7 +78,7 @@ Performance metrics for different data and models are displayed in the console a
 
   - `OwnMethod.py` module contains my peak detection method + Compression of data function
 
-  - `exec_pan_tompkins_plus_plus.py` contains the PanTompkins++ method from Md Niaz Imtiaz [PanTomp++](https://arxiv.org/abs/2211.03171)
+  - `pan_tompkins_plus_plus.py` contains the PanTompkins++ method from Md Niaz Imtiaz [PanTomp++](https://arxiv.org/abs/2211.03171)
 
   - `SQRS.py` module contains my interpretation of the SQRS peak detection method based on the work of Lu Wu et al. [SQRS](https://pubmed.ncbi.nlm.nih.gov/33670719/) and subsequent compression function
 
