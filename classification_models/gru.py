@@ -62,7 +62,7 @@ def model_run_GRU(x_train, x_test, y_train_multilabel, y_test_multilabel, type_o
     model = train_model(x_train_reshaped, y_train_multilabel, x_test_reshaped, y_test_multilabel, epochs=epochs, batch_size=16, num_splits=10, classes=5, type_of_data=type_of_data)
     end = tm.time()
     time = end - start
-    print(f"Training and Evaluation time on {type_of_data}: {time}") 
+    print(f"Training and Evaluation time on {type_of_data}: {time}\n") 
 
 """Following function trains the GRU model and returns several performance metrics for it"""
 def train_model(x_train, y_train_multilabel, x_test, y_test_multilabel, epochs=5, batch_size=32, num_splits=10, classes=5, type_of_data="data"):

@@ -44,7 +44,7 @@ def model_run_resnet(x_train, x_test, y_train_multilabel, y_test_multilabel, typ
     #model = train_resnet1d_wang2(x_train_reshaped, y_train_multilabel,  x_test_reshaped, y_test_multilabel, epochs=epochs, batch_size=32, num_splits=10, type_of_data=type_of_data)
     end = tm.time()
     time = end - start
-    print(f"Training and Evaluation time on {type_of_data}: {time}")
+    print(f"Training and Evaluation time on {type_of_data}: {time}\n")
 
 """
 author = Marko Stankovic
