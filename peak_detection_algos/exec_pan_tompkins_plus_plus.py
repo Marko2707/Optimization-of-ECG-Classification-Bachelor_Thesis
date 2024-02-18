@@ -5,7 +5,7 @@ Following module utilizes the PanTompkins++ method from Niaz et al. in their git
 from peak_detection_algos.pan_tompkins_plus_plus import Pan_Tompkins_Plus_Plus
 import numpy as np
 
-""" Function which only lets the QRS Complexes in the data at the END
+""" Function which only lets the QRS Complexes in the data at the END.
     This version of the data is utilized in Appendix B to showcase the effect of less complex data with the same length as the original data.
     This is unused right now in the main.py
 """

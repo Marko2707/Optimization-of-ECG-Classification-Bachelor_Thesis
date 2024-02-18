@@ -4,7 +4,7 @@
 
 This repository contains the code used for **optimizing** ECG signal preprocessing through **peak detection**. The main focus is on evaluating different peak detection methods and their impact on the performance of machine learning models trained on ECG data. The peak detection algorithms are used to compress the ECG data into their QRS complexes and the machine learning models are subsequenty tested on both compressed and raw data and compared. 
 
-The work showcased significant improvements in runtime, whilst only minimally impacting performance scores such as Accuracy, Precision etc. 
+The work showcased significant improvements in runtime, whilst only minimally impacting performance scores such as Accuracy, Precision and more. For further information please refer to the bachelor thesis. 
 
 ## Disclaimer
 The Python version used was **Python 3.11.6** for testing. 
@@ -17,25 +17,32 @@ Before executing the code, ensure that you have the following dependencies insta
 - ast
 - pandas
 - matplotlib
-- sklearn
+- sklearn / scikit-learn
 - peakutils
 - scipy
 - fastai v1.0.61
 
-To install fastai v1, use the following command:
+To install fastai v1, I used the following command:
+
 pip install fastai==1.0.61
+
+PyTorch was installed with following command: 
+
+pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 
+
+No further tests were done with different versions. CUDA is recommended.
 
 ## Usage
 
 To test the results of the models and generate ECG data plots, execute the `main.py` file.
 
-Before running the `main.py` file, ensure to set the path name to the location of the PTB-XL dataset! You can download the dataset [here](https://physionet.org/content/ptb-xl/1.0.3/). It can be found in **lines 62-66** where it is elaborated how to give the path. The dataset has to be extracted in the folder you put to the pathname variable. 
+Before running the `main.py` file, ensure to set the path name to the location of the extracted **PTB-XL dataset**! You can download the dataset [here](https://physionet.org/content/ptb-xl/1.0.3/). The **pathname** variable can be found in **lines 59-62** where it is elaborated how to give the path. The dataset has to be extracted in the folder you put to the pathname variable.  
 
 Under Windows the format should be the following "C:/Users/user/ptb-xl/" --> Dont forget an "/" at the end. 
 
 The PTB-XL dataset is utilized to create training and testing sets with corresponding labels. The data is then saved into two folders, namely `NumpyArrays` and `PandaSeries`, for future use. 
 
-It is crucial to allow the initial data initialization to proceed without interruption to prevent data fragmentation!
+It is crucial to allow the initial data initialization to proceed without interruption to **prevent data fragmentation**!
 
 ## Models and Methods
 
@@ -75,6 +82,7 @@ Performance metrics for different data and models are displayed in the console a
 
   - `SQRS.py` module contains my interpretation of the SQRS peak detection method based on the work of Lu Wu et al. [SQRS](https://pubmed.ncbi.nlm.nih.gov/33670719/) and subsequent compression function
 
+- `results` Folder that contains .txt files with the performance metrics of the different test runs and are named after the runs
 
 - `helper_functions.py` module containing helping functions such as plots, checks for folders etc.
 
@@ -87,7 +95,6 @@ Performance metrics for different data and models are displayed in the console a
 ## References
 
 - Data Loading Function: [PTB-XL_data_load](https://physionet.org/content/ptb-xl/1.0.3/) contained with the PTB-XL dataset from Nils Strodthoff et al. 
-- Peak Detection Methods:
 - ResNet model: [resnet1d_wang model](https://github.com/helme/ecg_ptbxl_benchmarking) from the Work of Nils Strodthoff et al. 
 - Peak Detection Methods:
   - [PanTompkins++](https://arxiv.org/abs/2211.03171) from Md Niaz Imtiaz et al. Work
@@ -97,6 +104,6 @@ The passages used from these works are referenced in the code. In addition, a lo
 
 ## Notes
 
-The code contains commented-out passages that are not currently utilized but may serve for future work or additional testing, either by reviewers or the author.
+The code contains commented-out passages that are not currently utilized but may serve for future work or additional testing, either by reviewers or the author. (These include plots, testcases, functions, etc.)
 
 For more detailed information, please refer to the bachelor thesis or contact me via email at s7081251@stud.uni-frankfurt.de.

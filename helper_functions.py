@@ -104,7 +104,6 @@ def plot_panTompkinsPlusPlus(x_train):
 
     first_ekg_signal = x_train[0, :, 0]
 
-
     #Setting the frequency to 100Hz for the PanTompkinsPlusPlus
     freq = 100
 
@@ -120,7 +119,7 @@ def plot_panTompkinsPlusPlus(x_train):
 
     print("Detected R-peaks indices:", r_peaks_indices)
 
-    #plot of signal
+    #plot of signal with R-peaks found
     plt.figure(figsize=(12, 6))
     plt.plot(time_axis, first_ekg_signal, label="NORM Class R-Peak Detection through Pan-Tompkins++")
     plt.plot(r_peaks / freq, first_ekg_signal[r_peaks], "x", color="red")
@@ -148,7 +147,7 @@ def plot_panTompkinsPlusPlus(x_train):
     modified_signal = first_ekg_signal * mask
 
     print("Detected R-peaks indices:", r_peaks_indices)
-
+    #Plot of Data with only QRS Complexes
     plt.figure(figsize=(12, 6))
     plt.plot(time_axis, first_ekg_signal, label="Original ECG Signal")
     plt.plot(time_axis, modified_signal, label="QRS-Complexes", linestyle="--", color="red")
@@ -158,3 +157,43 @@ def plot_panTompkinsPlusPlus(x_train):
     plt.ylabel("Amplitude (mV)")
     plt.legend()
     plt.show()
+
+    #-------Compressed Data Plot---------------------------------
+    modified_ecg_data = np.zeros_like(x_train)
+    ecg_data = x_train
+    first_lead = ecg_data[0, :, 0]
+       
+    freq = 100
+    pan_tompkins = Pan_Tompkins_Plus_Plus()
+    r_peaks_indices = pan_tompkins.rpeak_detection(first_lead, freq)
+    r_peaks_indices = r_peaks_indices.astype(int)
+
+    starting_point = 0
+    for peak_index in r_peaks_indices:
+        #setting the first window infront of the rpeak, or start of the data
+        start_index = max(0, peak_index - window_size)
+
+        #setting the window after the rpeak or end of the data
+        #len(first_lead) is 1000
+        end_index = min(len(first_lead), peak_index + window_size + 1)
+        end_point = end_index - start_index + starting_point
+
+        # Keep the R-peaks and 100 seconds before and after unchanged
+        modified_ecg_data[0, starting_point:end_point, 0] = ecg_data[0, start_index:end_index, 0]
+        starting_point = end_point + 5
+
+    #Remove the last data_length measurements along the second axis
+    modified_ecg_data = modified_ecg_data[:, :-500, :]
+    modified_signal = modified_ecg_data[0,:,0]
+
+
+    #Plot of Compressed data
+    plt.figure(figsize=(12, 6))
+    plt.plot(first_ekg_signal, label="Original ECG Signal")
+    plt.plot(modified_signal, label="QRS-Complexes Compressed", linestyle="--", color="red")
+    plt.title("Compressed ECG Signal with QRS complexes")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Amplitude (mV)")
+    plt.legend()
+    plt.show()
+

@@ -54,7 +54,7 @@ from classification_models.lstm import model_runLSTM
 from classification_models.gru import model_run_GRU
 
 
-#---Global Parameters----------------------------------------
+#---Global Parameters------------------------------------------------------------------------------------------------------------------------
 #add the folder where your ptb-xl data is (It can be found under: https://physionet.org/content/ptb-xl/1.0.3/ )
 #the path structure under windows should then be like following template:  "C:/Users/marko/Desktop/ptb-xl" as string, the PTB-XL dataset should be inside the folder
 pathname = "C:/Users/marko/Desktop/ptb-xl/" #Make sure add a "/" at the end
@@ -65,10 +65,11 @@ plot_choice = "no" # "yes" or "no"
 
 #Decision by which amount the data should get compressed (0-500) (500 is suggested) (It should not be less than 300, as information might get loss)
 length_data_compressed = 500 #By how much the data gets reduced in measuring points (1000 is the original data length)
-#---Global Parameters----------------------------------------
+#---Global Parameters------------------------------------------------------------------------------------------------------------------------
+
 
 def main(): 
-    print("Run is initialized")
+    print("Run is initialized.\n")
     #----Data Initiation process start -------------------------------------------------------------------------------------------------------------
     #Pre-Saving the Data for faster testing, first initialization takes the longest
 
@@ -179,7 +180,7 @@ def main():
     y_train_multilabel = mlb.fit_transform(y_train)     
     y_test_multilabel = mlb.transform(y_test)
 
-    print("The results of the different methods will be written into the .txts in the results folder\n\n")
+    print("\n\nThe results of the different methods will be written into the .txts in the results folder\n\n")
     #(1)-------------Model Run on RAW DATA ----------------------------------------------------------------------
  
     
