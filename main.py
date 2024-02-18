@@ -186,7 +186,7 @@ def main():
     
     print("--Run on the original Raw Data is initialized--")
     model_run_resnet(x_train=x_train, x_test=x_test, y_train_multilabel=y_train_multilabel,y_test_multilabel=y_test_multilabel, type_of_data="Raw Data on ResNet Model", epochs=3, length_data_compressed=0)
-    model_runLSTM(x_train, x_test, y_train_multilabel, y_test_multilabel, type_of_data="RawData on LSTM Model", epochs=4, length_data_compressed=0)
+    model_runLSTM(x_train, x_test, y_train_multilabel, y_test_multilabel, type_of_data="Raw Data on LSTM Model", epochs=4, length_data_compressed=0)
     model_run_GRU(x_train=x_train, x_test=x_test, y_train_multilabel=y_train_multilabel,y_test_multilabel=y_test_multilabel, type_of_data="Raw Data on GRU Model", epochs=9, length_data_compressed=0)
     print("--End of Raw Data Run --\n\n")
 
